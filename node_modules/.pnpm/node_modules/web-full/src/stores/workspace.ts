@@ -8,7 +8,7 @@ import type {
   ImportData,
   ExportData 
 } from '@api-debug-tool/shared/types'
-import { storage } from '@api-debug-tool/shared/utils/storage'
+import { storage } from '@api-debug-tool/shared/utils'
 
 export const useWorkspaceStore = defineStore('workspace', () => {
   const currentWorkspace = ref<Workspace | null>(null)
