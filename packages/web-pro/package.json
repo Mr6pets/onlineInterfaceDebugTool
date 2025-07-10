@@ -1,0 +1,38 @@
+{
+  "name": "web-pro",
+  "version": "1.0.0",
+  "description": "在线接口调试工具 - Pro加强版",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 3002",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.3.4",
+    "vue-router": "^4.2.4",
+    "pinia": "^2.1.6",
+    "element-plus": "^2.3.8",
+    "@element-plus/icons-vue": "^2.1.0",
+    "axios": "^1.5.0",
+    "@api-debug-tool/shared": "workspace:*",
+    "monaco-editor": "^0.41.0",
+    "@monaco-editor/loader": "^1.4.0",
+    "echarts": "^5.4.3",
+    "vue-echarts": "^6.6.1",
+    "socket.io-client": "^4.7.2",
+    "js-yaml": "^4.1.0",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1",
+    "@vueuse/core": "^10.4.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.4.0",
+    "typescript": "^5.0.2",
+    "vite": "^4.4.5",
+    "vue-tsc": "^1.8.5",
+    "sass": "^1.66.1",
+    "@types/js-yaml": "^4.0.5",
+    "@types/file-saver": "^2.0.5"
+  }
+}
