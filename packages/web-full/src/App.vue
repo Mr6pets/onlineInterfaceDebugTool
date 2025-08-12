@@ -53,10 +53,7 @@ const toggleSidebar = () => {
 }
 
 .app-header {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e0f2fe 100%);
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(20px) saturate(180%);
   border-radius: 0 0 16px 16px;
   margin: 0 8px;
   padding: 0;

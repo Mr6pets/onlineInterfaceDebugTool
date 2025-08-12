@@ -11,7 +11,7 @@
           @click="showInviteModal = true"
           class="btn btn-primary"
         >
-          <UserPlus class="w-4 h-4 mr-2" />
+          <UserFilled class="w-4 h-4 mr-2" />
           邀请成员
         </button>
       </div>
@@ -21,7 +21,7 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon">
-          <Users class="w-6 h-6 text-blue-500" />
+          <User class="w-6 h-6 text-blue-500" />
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ teamStore.members.length }}</div>
@@ -30,7 +30,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon">
-          <Shield class="w-6 h-6 text-green-500" />
+          <Lock class="w-6 h-6 text-green-500" />
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ adminCount }}</div>
@@ -48,7 +48,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon">
-          <Activity class="w-6 h-6 text-purple-500" />
+          <TrendCharts class="w-6 h-6 text-purple-500" />
         </div>
         <div class="stat-content">
           <div class="stat-value">{{ activeCount }}</div>
@@ -141,14 +141,14 @@
                 class="action-btn danger"
                 title="移除成员"
               >
-                <UserMinus class="w-4 h-4" />
+                <Remove class="w-4 h-4" />
               </button>
               <button 
                 @click="viewMemberDetails(member)"
                 class="action-btn"
                 title="查看详情"
               >
-                <Eye class="w-4 h-4" />
+                <View class="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -186,14 +186,14 @@
               class="action-btn"
               title="重新发送"
             >
-              <RefreshCw class="w-4 h-4" />
+              <Refresh class="w-4 h-4" />
             </button>
             <button 
               @click="cancelInvite(invite)"
               class="action-btn danger"
               title="取消邀请"
             >
-              <X class="w-4 h-4" />
+              <Close class="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -206,7 +206,7 @@
         <div class="modal-header">
           <h3 class="modal-title">邀请团队成员</h3>
           <button @click="showInviteModal = false" class="modal-close">
-            <X class="w-5 h-5" />
+            <Close class="w-5 h-5" />
           </button>
         </div>
         <div class="modal-body">
@@ -256,16 +256,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { 
-  User as Users, 
-  UserFilled as UserPlus, 
-  Remove as UserMinus, 
-  Lock as Shield, 
+  User, 
+  UserFilled, 
+  Remove, 
+  Lock, 
   Clock, 
-  TrendCharts as Activity, 
+  TrendCharts, 
   Search, 
-  View as Eye, 
-  Refresh as RefreshCw, 
-  Close as X 
+  View, 
+  Refresh, 
+  Close 
 } from '@element-plus/icons-vue'
 import { useTeamStore } from '@/stores/team'
 
@@ -817,7 +817,7 @@ onMounted(() => {
 }
 
 .role-badge {
-  @apply px-4 py-2 rounded-xl text-sm font-bold backdrop-filter backdrop-blur-8;
+  @apply px-4 py-2 rounded-xl text-sm font-bold backdrop-filter backdrop-blur-sm;
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
 }
@@ -845,7 +845,7 @@ onMounted(() => {
 }
 
 .status-badge {
-  @apply px-4 py-2 rounded-xl text-sm font-bold backdrop-filter backdrop-blur-8;
+  @apply px-4 py-2 rounded-xl text-sm font-bold backdrop-filter backdrop-blur-sm;
   border: 1px solid rgba(255, 255, 255, 0.3);
   transition: all 0.3s ease;
 }

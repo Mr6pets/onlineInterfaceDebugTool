@@ -774,28 +774,40 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       }
     }
     
-    const saveCollections = async () => {
+    const activateEnvironment = async (environmentId: string) => {
       try {
-        await storage.set('collections', collections.value)
-      } catch (error) {
-        console.error('Failed to save collections:', error)
-      }
-    }
-    
-    const saveEnvironments = async () => {
-      try {
+        const environment = environments.value.find(env => env.id === environmentId)
+        if (!environment) {
+          ElMessage.error('环境不存在')
+          return
+        }
+        
+        // 将所有环境设为非激活状态
+        environments.value.forEach(env => {
+          env.isActive = false
+        })
+        
+        // 激活指定环境
+        environment.isActive = true
+        
         await storage.set('environments', environments.value)
+        
+        await logActivity({
+          action: 'activate',
+          resource: 'environment',
+          resourceId: environmentId,
+          details: `激活环境: ${environment.name}`
+        })
+        
+        ElMessage.success(`已激活环境: ${environment.name}`)
       } catch (error) {
-        console.error('Failed to save environments:', error)
+        console.error('Failed to activate environment:', error)
+        ElMessage.error('激活环境失败')
       }
     }
     
-    const saveBatchTests = async () => {
-      try {
-        await storage.set('batchTests', batchTests.value)
-      } catch (error) {
-        console.error('Failed to save batch tests:', error)
-      }
+    const saveBatchTests = () => {
+      storage.set('batchTests', batchTests.value)
     }
     
     // 监听数据变化，自动保存
@@ -856,7 +868,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       saveBatchTest,
       deleteBatchTest,
       importData,
-      exportData,
+      exportWorkspace,
       
       // 企业级功能方法
       createWorkspace,
