@@ -584,15 +584,56 @@ import {
   UploadFilled
 } from '@element-plus/icons-vue'
 import { useCollectionStore } from '@/stores/collection'
-// 临时本地类型定义
+// 类型定义
+interface Collaborator {
+  id: string
+  name: string
+  email: string
+}
+
 interface Collection {
   id: string
   name: string
   description?: string
-  requests: any[]
+  requests?: any[]
   tags?: string[]
+  isPublic?: boolean
+  isShared?: boolean
+  isFavorite?: boolean
+  requestCount?: number
+  collaborators?: Collaborator[]
   createdAt: Date
   updatedAt: Date
+  createdBy?: string
+  workspaceId?: string
+}
+
+interface CreateForm {
+  name: string
+  description: string
+  tags: string[]
+  isPublic: boolean
+}
+
+interface EditForm {
+  id: string
+  name: string
+  description: string
+  tags: string[]
+  isPublic: boolean
+}
+
+interface ShareForm {
+  permission: string
+  expiry: string
+  requirePassword: boolean
+  password: string
+}
+
+interface ImportOptions {
+  mode: string
+  targetCollection: string
+  conflictResolution: string
 }
 import dayjs from 'dayjs'
 
@@ -623,24 +664,24 @@ const createFormRef = ref<FormInstance>()
 const editFormRef = ref<FormInstance>()
 
 // 创建表单
-const createForm = ref({
+const createForm = ref<CreateForm>({
   name: '',
   description: '',
-  tags: [] as string[],
+  tags: [],
   isPublic: false
 })
 
 // 编辑表单
-const editForm = ref({
+const editForm = ref<EditForm>({
   id: '',
   name: '',
   description: '',
-  tags: [] as string[],
+  tags: [],
   isPublic: false
 })
 
 // 分享表单
-const shareForm = ref({
+const shareForm = ref<ShareForm>({
   permission: 'view',
   expiry: 'never',
   requirePassword: false,
@@ -648,7 +689,7 @@ const shareForm = ref({
 })
 
 // 导入选项
-const importOptions = ref({
+const importOptions = ref<ImportOptions>({
   mode: 'create',
   targetCollection: '',
   conflictResolution: 'skip'

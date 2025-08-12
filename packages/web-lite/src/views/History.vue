@@ -155,7 +155,7 @@
                 </el-icon>
               </el-button>
               
-              <el-dropdown @command="(command) => handleItemAction(command, item)">
+              <el-dropdown @command="(command: string) => handleItemAction(command, item)">
                 <el-button type="text">
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>

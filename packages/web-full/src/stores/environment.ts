@@ -1,18 +1,12 @@
 import { ref, computed, watch } from 'vue'
 import { defineStore } from 'pinia'
-// 临时本地类型定义
-interface Environment {
-  id: string
-  name: string
-  description?: string
-  variables: EnvironmentVariable[]
-  isActive: boolean
-  groupId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+import type {
+  Environment as BaseEnvironment
+} from '@shared/types'
 
+// 本地特定类型定义
 interface EnvironmentVariable {
+  id: string
   key: string
   value: string
   description?: string
@@ -20,12 +14,20 @@ interface EnvironmentVariable {
   isEnabled?: boolean
 }
 
+// 扩展Environment类型以支持本地功能
+interface Environment extends BaseEnvironment {
+  description?: string
+  variables: Record<string, string>
+  groupId?: string
+}
+
 interface EnvironmentGroup {
   id: string
   name: string
   description?: string
   color?: string
-  environments: string[]
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface EnvironmentTemplate {
@@ -34,23 +36,11 @@ interface EnvironmentTemplate {
   description?: string
   variables: EnvironmentVariable[]
   tags?: string[]
+  createdAt: Date
+  updatedAt: Date
 }
 
-interface EnvironmentConfig {
-  defaultEnvironment?: string
-  autoSwitchEnvironment?: boolean
-  variablePrefix?: string
-  variableSuffix?: string
-}
-
-interface ActivityLog {
-  id: string
-  action: string
-  resource: string
-  resourceId: string
-  details: string
-  timestamp: Date
-}
+// 移除未使用的接口定义
 
 // 临时本地存储工具
 const storage = {
@@ -107,9 +97,9 @@ export const useEnvironmentStore = defineStore('environment', () => {
       filtered = filtered.filter(env => 
         env.name.toLowerCase().includes(query) ||
         env.description?.toLowerCase().includes(query) ||
-        env.variables.some(variable => 
-          variable.key.toLowerCase().includes(query) ||
-          variable.value.toLowerCase().includes(query)
+        Object.entries(env.variables).some(([key, value]) => 
+          key.toLowerCase().includes(query) ||
+          value.toLowerCase().includes(query)
         )
       )
     }
@@ -151,8 +141,8 @@ export const useEnvironmentStore = defineStore('environment', () => {
     
     // 环境变量
     environments.value.forEach(env => {
-      env.variables.forEach(variable => {
-        keys.add(variable.key)
+      Object.keys(env.variables).forEach(key => {
+        keys.add(key)
       })
     })
     
@@ -164,11 +154,11 @@ export const useEnvironmentStore = defineStore('environment', () => {
     const variableMap: Record<string, string[]> = {}
     
     environments.value.forEach(env => {
-      env.variables.forEach(variable => {
-        if (!variableMap[variable.key]) {
-          variableMap[variable.key] = []
+      Object.keys(env.variables).forEach(key => {
+        if (!variableMap[key]) {
+          variableMap[key] = []
         }
-        variableMap[variable.key].push(env.name)
+        variableMap[key].push(env.name)
       })
     })
     
@@ -362,7 +352,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
         name: `${originalEnvironment.name} (副本)`,
         createdAt: new Date(),
         updatedAt: new Date(),
-        variables: originalEnvironment.variables.map(variable => ({ ...variable }))
+        variables: { ...originalEnvironment.variables }
       }
       
       environments.value.push(duplicatedEnvironment)
@@ -517,12 +507,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
         throw new Error('Environment not found')
       }
       
-      const newVariable: EnvironmentVariable = {
-        ...variable,
-        id: `var-${Date.now()}`
-      }
-      
-      environment.variables.push(newVariable)
+      environment.variables[variable.key] = variable.value
       environment.updatedAt = new Date()
       
       await saveEnvironments()
@@ -535,7 +520,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
       })
       
       ElMessage.success('变量添加成功')
-      return newVariable
+      return variable
     } catch (error) {
       console.error('Failed to add variable:', error)
       ElMessage.error('添加变量失败')
@@ -543,19 +528,20 @@ export const useEnvironmentStore = defineStore('environment', () => {
     }
   }
   
-  const updateVariable = async (environmentId: string, variableId: string, updates: Partial<EnvironmentVariable>) => {
+  const updateVariable = async (environmentId: string, variableKey: string, updates: Partial<EnvironmentVariable>) => {
     try {
       const environment = environments.value.find(env => env.id === environmentId)
       if (!environment) {
         throw new Error('Environment not found')
       }
       
-      const variable = environment.variables.find(v => v.id === variableId)
-      if (!variable) {
+      if (!(variableKey in environment.variables)) {
         throw new Error('Variable not found')
       }
       
-      Object.assign(variable, updates)
+      if (updates.value !== undefined) {
+        environment.variables[variableKey] = updates.value
+      }
       environment.updatedAt = new Date()
       
       await saveEnvironments()
@@ -564,7 +550,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
         action: 'update_variable',
         resource: 'environment',
         resourceId: environmentId,
-        details: `更新变量: ${variable.key}`
+        details: `更新变量: ${variableKey}`
       })
       
       ElMessage.success('变量更新成功')
@@ -574,16 +560,14 @@ export const useEnvironmentStore = defineStore('environment', () => {
     }
   }
   
-  const deleteVariable = async (environmentId: string, variableId: string) => {
+  const deleteVariable = async (environmentId: string, variableKey: string) => {
     try {
       const environment = environments.value.find(env => env.id === environmentId)
       if (!environment) return
       
-      const variableIndex = environment.variables.findIndex(v => v.id === variableId)
-      if (variableIndex === -1) return
+      if (!(variableKey in environment.variables)) return
       
-      const variable = environment.variables[variableIndex]
-      environment.variables.splice(variableIndex, 1)
+      delete environment.variables[variableKey]
       environment.updatedAt = new Date()
       
       await saveEnvironments()
@@ -592,7 +576,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
         action: 'delete_variable',
         resource: 'environment',
         resourceId: environmentId,
-        details: `删除变量: ${variable.key}`
+        details: `删除变量: ${variableKey}`
       })
       
       ElMessage.success('变量删除成功')
@@ -716,11 +700,16 @@ export const useEnvironmentStore = defineStore('environment', () => {
         throw new Error('Template not found')
       }
       
+      const variables: Record<string, string> = {}
+      template.variables.forEach(variable => {
+        variables[variable.key] = variable.value
+      })
+      
       const newEnvironment: Environment = {
         id: `env-${Date.now()}`,
         name: environmentName,
         description: template.description,
-        variables: template.variables.map(variable => ({ ...variable, id: `var-${Date.now()}-${Math.random().toString(36).substr(2, 9)}` })),
+        variables,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
@@ -841,7 +830,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
   }
   
   const importFromEnvFile = async (data: string): Promise<Environment[]> => {
-    const variables: EnvironmentVariable[] = []
+    const variables: Record<string, string> = {}
     const lines = data.split('\n')
     
     lines.forEach(line => {
@@ -849,13 +838,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
       if (trimmed && !trimmed.startsWith('#')) {
         const [key, ...valueParts] = trimmed.split('=')
         if (key && valueParts.length > 0) {
-          variables.push({
-            id: `var-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            key: key.trim(),
-            value: valueParts.join('=').trim(),
-            type: 'text',
-            isEnabled: true
-          })
+          variables[key.trim()] = valueParts.join('=').trim()
         }
       }
     })
@@ -872,18 +855,12 @@ export const useEnvironmentStore = defineStore('environment', () => {
   }
   
   const importFromPostmanEnvironment = async (data: any): Promise<Environment[]> => {
-    const variables: EnvironmentVariable[] = []
+    const variables: Record<string, string> = {}
     
     if (data.values && Array.isArray(data.values)) {
       data.values.forEach((item: any) => {
         if (item.key) {
-          variables.push({
-            id: `var-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            key: item.key,
-            value: item.value || '',
-            type: item.type || 'text',
-            isEnabled: item.enabled !== false
-          })
+          variables[item.key] = item.value || ''
         }
       })
     }
@@ -915,10 +892,8 @@ export const useEnvironmentStore = defineStore('environment', () => {
     }
     lines.push('')
     
-    env.variables.forEach(variable => {
-      if (variable.isEnabled) {
-        lines.push(`${variable.key}=${variable.value}`)
-      }
+    Object.entries(env.variables).forEach(([key, value]) => {
+      lines.push(`${key}=${value}`)
     })
     
     return lines.join('\n')
@@ -932,11 +907,11 @@ export const useEnvironmentStore = defineStore('environment', () => {
     return {
       id: env.id,
       name: env.name,
-      values: env.variables.map(variable => ({
-        key: variable.key,
-        value: variable.value,
-        type: variable.type,
-        enabled: variable.isEnabled
+      values: Object.entries(env.variables).map(([key, value]) => ({
+        key,
+        value,
+        type: 'text',
+        enabled: true
       }))
     }
   }
@@ -956,11 +931,9 @@ export const useEnvironmentStore = defineStore('environment', () => {
     // 解析环境变量
     const env = environment || currentEnvironment.value
     if (env) {
-      env.variables.forEach(variable => {
-        if (variable.isEnabled) {
-          const regex = new RegExp(`{{${variable.key}}}`, 'g')
-          resolved = resolved.replace(regex, variable.value)
-        }
+      Object.entries(env.variables).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g')
+        resolved = resolved.replace(regex, value)
       })
     }
     
@@ -971,9 +944,9 @@ export const useEnvironmentStore = defineStore('environment', () => {
     // 优先从指定环境或当前环境获取
     const env = environment || currentEnvironment.value
     if (env) {
-      const envVariable = env.variables.find(v => v.key === key && v.isEnabled)
+      const envVariable = env.variables[key]
       if (envVariable) {
-        return envVariable.value
+        return envVariable
       }
     }
     

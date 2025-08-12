@@ -140,6 +140,9 @@ export interface Workspace {
   environments: string[]; // environment IDs
   activeEnvironment?: string;
   settings: WorkspaceSettings;
+  isPublic: boolean;
+  ownerId: string;
+  members: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -277,6 +280,7 @@ export interface ShareLink {
   createdAt: Date;
   accessCount: number;
   lastAccessedAt?: Date;
+  isActive?: boolean;
 }
 
 export interface SharePermission {
@@ -444,38 +448,12 @@ export interface PerformanceReport {
   createdAt: Date;
 }
 
-// 团队协作
-export interface Team {
-  id: string;
-  name: string;
-  description?: string;
-  members: TeamMember[];
-  workspaces: string[]; // workspace IDs
-  settings: TeamSettings;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface TeamMember {
-  id: string;
-  email: string;
-  name: string;
-  role: 'owner' | 'admin' | 'editor' | 'viewer';
-  permissions: Permission[];
-  joinedAt: Date;
-  lastActiveAt?: Date;
-}
-
-export interface Permission {
-  resource: 'workspace' | 'collection' | 'environment' | 'test';
-  actions: ('read' | 'write' | 'delete' | 'share')[];
-}
-
 export interface TeamSettings {
   allowGuestAccess: boolean;
   requireApproval: boolean;
-  defaultRole: TeamMember['role'];
+  defaultRole: TeamRole;
   maxMembers: number;
+  visibility: 'private' | 'internal' | 'public';
 }
 
 // API文档生成

@@ -146,7 +146,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { 
   Setting, 
-  Search, 
   User, 
   ArrowDown, 
   SwitchButton,
@@ -155,10 +154,7 @@ import {
   Refresh,
   Bell,
   Avatar,
-  QuestionFilled,
-  Folder,
-  Document,
-  DataAnalysis
+  QuestionFilled
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useWorkspaceStore } from '@/stores/workspace'
@@ -206,14 +202,27 @@ interface UserType {
 
 type UserRole = 'admin' | 'member' | 'viewer' | 'owner'
 
-interface Workspace {
+
+
+interface SearchSuggestion {
   id: string
-  name: string
-  description?: string
-  ownerId: string
-  members: string[]
+  title: string
+  description: string
+  icon: string
+  type: 'api' | 'collection' | 'environment'
+}
+
+interface Notification {
+  id: string
+  title: string
+  content: string
+  read: boolean
   createdAt: Date
-  updatedAt: Date
+}
+
+interface BreadcrumbItem {
+  label: string
+  path: string
 }
 
 const router = useRouter()
@@ -252,7 +261,7 @@ const currentWorkspace = computed(() => workspaceStore.currentWorkspace)
 
 // 面包屑导航
 const breadcrumbItems = computed(() => {
-  const items = []
+  const items: BreadcrumbItem[] = []
   const routeName = route.name as string
   
   if (routeName?.includes('collection')) {
@@ -271,7 +280,7 @@ const breadcrumbItems = computed(() => {
 // 搜索相关
 const searchQuery = ref('')
 const showSearchSuggestions = ref(false)
-const searchSuggestions = ref([
+const searchSuggestions = ref<SearchSuggestion[]>([
   {
     id: '1',
     title: 'GET /api/users',
@@ -300,7 +309,7 @@ const syncing = ref(false)
 
 // 通知相关
 const unreadNotifications = ref(3)
-const recentNotifications = ref([
+const recentNotifications = ref<Notification[]>([
   {
     id: '1',
     title: '团队成员邀请',
@@ -341,7 +350,7 @@ const handleSearch = () => {
   showSearchSuggestions.value = false
 }
 
-const selectSuggestion = (suggestion: any) => {
+const selectSuggestion = (suggestion: SearchSuggestion) => {
   searchQuery.value = suggestion.title
   showSearchSuggestions.value = false
   

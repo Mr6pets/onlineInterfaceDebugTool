@@ -41,7 +41,7 @@
             </div>
             
             <div class="node-actions" v-if="data.type === 'collection'">
-              <el-dropdown @command="(command) => handleAction(command, data)">
+              <el-dropdown @command="(command: string) => handleAction(command, data)">
                 <el-button size="small" text>
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>
@@ -104,29 +104,7 @@ import {
   Download,
   Delete
 } from '@element-plus/icons-vue'
-
-interface ApiCollection {
-  id: string
-  name: string
-  description?: string
-  requests: ApiRequest[]
-  folders?: ApiFolder[]
-}
-
-interface ApiRequest {
-  id: string
-  name: string
-  method: string
-  url: string
-  headers?: Record<string, string>
-  body?: any
-}
-
-interface ApiFolder {
-  id: string
-  name: string
-  requests: ApiRequest[]
-}
+import type { ApiCollection } from '@shared/types'
 
 interface TreeNode {
   id: string
@@ -134,7 +112,7 @@ interface TreeNode {
   type: 'collection' | 'folder' | 'request'
   method?: string
   children?: TreeNode[]
-  data?: any
+  data?: ApiCollection | any
 }
 
 interface Props {
@@ -143,7 +121,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-defineEmits<{
+const emit = defineEmits<{
   'select-request': [request: any, name: string]
   'create-collection': []
   'edit-collection': [collection: ApiCollection]
@@ -166,19 +144,22 @@ const treeData = computed(() => {
         id: folder.id,
         label: folder.name,
         type: 'folder' as const,
-        children: folder.requests.map(request => ({
-          id: request.id,
-          label: request.name,
-          type: 'request' as const,
-          method: request.method,
-          data: request
-        }))
+        children: (folder.requests || []).map((requestId: string) => {
+          const request = (collection.requests || []).find(r => r.id === requestId)
+          return request ? {
+            id: request.id,
+            label: request.name,
+            type: 'request' as const,
+            method: request.request.method,
+            data: request
+          } : null
+        }).filter(Boolean) as TreeNode[]
       })),
-      ...collection.requests.map(request => ({
+      ...(collection.requests || []).map(request => ({
         id: request.id,
         label: request.name,
         type: 'request' as const,
-        method: request.method,
+        method: request.request.method,
         data: request
       }))
     ]
@@ -204,8 +185,7 @@ const handleNodeClick = (data: TreeNode) => {
       headers: data.data.headers || {},
       body: data.data.body
     }
-    // Emit select-request event
-    // $emit('select-request', request, data.label)
+    emit('select-request', request, data.label)
   }
 }
 
@@ -218,7 +198,7 @@ const handleAction = async (command: string, collection: ApiCollection) => {
       ElMessage.info('添加文件夹功能待实现')
       break
     case 'edit':
-      // $emit('edit-collection', collection)
+      emit('edit-collection', collection)
       break
     case 'duplicate':
       ElMessage.info('复制集合功能待实现')
@@ -255,7 +235,7 @@ const confirmDelete = async (collection: ApiCollection) => {
         type: 'warning'
       }
     )
-    // $emit('delete-collection', collection.id)
+    emit('delete-collection', collection.id)
   } catch {
     // 用户取消
   }

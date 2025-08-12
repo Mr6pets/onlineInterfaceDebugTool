@@ -268,7 +268,6 @@ import { useCollectionStore } from '@/stores/collection'
 import { useEnvironmentStore } from '@/stores/environment'
 
 const router = useRouter()
-const workspaceStore = useWorkspaceStore()
 const collectionStore = useCollectionStore()
 const environmentStore = useEnvironmentStore()
 

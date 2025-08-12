@@ -562,6 +562,7 @@ import {
   DocumentCopy
 } from '@element-plus/icons-vue'
 import { useWorkspaceStore } from '@/stores/workspace'
+import type { TeamRole } from '@shared/types'
 // 临时本地类型定义
 interface TeamMember {
   id: string
@@ -719,12 +720,12 @@ const getStatusTagType = (status: string) => {
 
 const canChangeRole = (member: TeamMember) => {
   // 只有所有者和管理员可以修改角色，且不能修改所有者角色
-  return member.role !== 'owner'
+  return member.role !== ('owner' as TeamRole)
 }
 
 const canRemoveMember = (member: TeamMember) => {
   // 不能移除所有者
-  return member.role !== 'owner'
+  return member.role !== ('owner' as TeamRole)
 }
 
 const handleSectionChange = (section: string) => {
@@ -744,19 +745,19 @@ const handleSaveAll = async () => {
   }
 }
 
-const handleRoleChange = async (member: TeamMember) => {
+const handleRoleChange = async (_member: TeamMember) => {
   try {
     // 这里应该调用API更新成员角色
-    ElMessage.success(`已更新 ${member.user.name} 的角色`)
+    ElMessage.success(`已更新成员的角色`)
   } catch (error) {
     ElMessage.error('更新角色失败')
   }
 }
 
-const handleRemoveMember = async (member: TeamMember) => {
+const handleRemoveMember = async (_member: TeamMember) => {
   try {
     await ElMessageBox.confirm(
-      `确定要移除成员 "${member.user.name}" 吗？`,
+      `确定要移除该成员吗？`,
       '确认移除',
       {
         confirmButtonText: '移除',

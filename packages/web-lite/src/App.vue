@@ -1,5 +1,5 @@
 <template>
-  <div id="app" :class="{ 'dark': settingsStore.currentSettings?.theme === 'dark' }">
+  <div id="app" :class="{ 'dark': settingsStore.settings?.theme === 'dark' }">
     <router-view />
   </div>
 </template>

@@ -31,40 +31,7 @@
         />
       </el-form-item>
       
-      <el-form-item label="标签" prop="tags">
-        <el-tag
-          v-for="tag in form.tags"
-          :key="tag"
-          closable
-          @close="removeTag(tag)"
-          style="margin-right: 8px; margin-bottom: 8px;"
-        >
-          {{ tag }}
-        </el-tag>
-        <el-input
-          v-if="inputVisible"
-          ref="inputRef"
-          v-model="inputValue"
-          size="small"
-          style="width: 100px;"
-          @keyup.enter="handleInputConfirm"
-          @blur="handleInputConfirm"
-        />
-        <el-button
-          v-else
-          size="small"
-          @click="showInput"
-        >
-          + 添加标签
-        </el-button>
-      </el-form-item>
-      
-      <el-form-item label="基础URL" prop="baseUrl">
-        <el-input
-          v-model="form.baseUrl"
-          placeholder="https://api.example.com（可选）"
-        />
-      </el-form-item>
+
     </el-form>
     
     <template #footer>
@@ -79,19 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-// 临时本地类型定义
-interface ApiCollection {
-  id: string
-  name: string
-  description?: string
-  requests: any[]
-  folders?: any[]
-  tags?: string[]
-  createdAt: Date
-  updatedAt: Date
-}
+import type { ApiCollection, CollectionFolder, CollectionRequest } from '@shared/types'
 
 interface Props {
   modelValue: boolean
@@ -110,21 +67,17 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>()
 
 const formRef = ref<FormInstance>()
-const inputRef = ref()
 const loading = ref(false)
-const inputVisible = ref(false)
-const inputValue = ref('')
 
 const form = ref({
   id: '',
   name: '',
-  description: '',
-  tags: [] as string[],
-  baseUrl: '',
-  requests: [],
-  folders: [],
-  createdAt: '',
-  updatedAt: ''
+  description: '' as string | undefined,
+  folders: [] as CollectionFolder[],
+  requests: [] as CollectionRequest[],
+  variables: {} as Record<string, string>,
+  createdAt: new Date(),
+  updatedAt: new Date()
 })
 
 const rules: FormRules = {
@@ -145,7 +98,7 @@ watch(() => props.collection, (newCollection) => {
   if (newCollection) {
     form.value = {
       ...newCollection,
-      tags: [...(newCollection.tags || [])]
+      description: newCollection.description || ''
     }
   } else {
     resetForm()
@@ -163,37 +116,16 @@ const resetForm = () => {
     id: '',
     name: '',
     description: '',
-    tags: [],
-    baseUrl: '',
-    requests: [],
     folders: [],
-    createdAt: '',
-    updatedAt: ''
+    requests: [],
+    variables: {},
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
   formRef.value?.clearValidate()
 }
 
-const removeTag = (tag: string) => {
-  const index = form.value.tags.indexOf(tag)
-  if (index > -1) {
-    form.value.tags.splice(index, 1)
-  }
-}
 
-const showInput = () => {
-  inputVisible.value = true
-  nextTick(() => {
-    inputRef.value?.focus()
-  })
-}
-
-const handleInputConfirm = () => {
-  if (inputValue.value && !form.value.tags.includes(inputValue.value)) {
-    form.value.tags.push(inputValue.value)
-  }
-  inputVisible.value = false
-  inputValue.value = ''
-}
 
 const handleClose = () => {
   visible.value = false
@@ -207,7 +139,7 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     loading.value = true
     
-    const now = new Date().toISOString()
+    const now = new Date()
     const collection: ApiCollection = {
       ...form.value,
       id: form.value.id || `collection_${Date.now()}`,

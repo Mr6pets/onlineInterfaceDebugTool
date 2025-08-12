@@ -151,7 +151,7 @@
             <div class="tab-content">
               <div class="cookies-list">
                 <div
-                  v-for="(cookie, index) in requestStore.response.cookies"
+                  v-for="(cookie, index) in requestStore.response?.cookies || []"
                   :key="index"
                   class="cookie-item"
                 >
@@ -164,7 +164,7 @@
                   </div>
                 </div>
                 
-                <div v-if="requestStore.response.cookies.length === 0" class="empty-state">
+                <div v-if="(requestStore.response?.cookies || []).length === 0" class="empty-state">
                   无Cookie信息
                 </div>
               </div>

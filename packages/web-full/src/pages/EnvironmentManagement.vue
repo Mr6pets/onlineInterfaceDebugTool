@@ -521,26 +521,30 @@ interface Environment {
   name: string
   description?: string
   variables: EnvironmentVariable[]
-  isActive: boolean
-  groupId?: string
+  workspaceId: string
   createdAt: Date
   updatedAt: Date
+  createdBy: string
 }
 
 interface EnvironmentVariable {
   key: string
   value: string
+  initialValue: string
+  enabled: boolean
+  secret: boolean
   description?: string
-  isSecret?: boolean
-  isEnabled?: boolean
+  selected?: boolean
 }
 
 interface EnvironmentGroup {
   id: string
   name: string
   description?: string
-  color?: string
-  environments: string[]
+  workspaceId: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
 }
 
 const environmentStore = useEnvironmentStore()

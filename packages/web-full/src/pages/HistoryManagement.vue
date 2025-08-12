@@ -545,24 +545,37 @@ import {
 // 临时本地类型定义
 interface HistoryRecord {
   id: string
-  request: any
-  response?: any
+  method: string
+  url: string
+  status: number
+  responseTime: number
+  responseSize: number
   timestamp: Date
-  duration: number
-  status: 'success' | 'error'
+  environmentId: string
+  requestHeaders: Record<string, string>
+  requestBody: string | null
+  responseHeaders: Record<string, string>
+  responseBody: string
 }
 
 interface Collection {
   id: string
   name: string
-  requests: any[]
+  description?: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+  workspaceId: string
 }
 
 interface Environment {
   id: string
   name: string
   variables: any[]
-  isActive: boolean
+  workspaceId: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
 }
 
 // 响应式数据

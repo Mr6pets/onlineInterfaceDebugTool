@@ -99,23 +99,7 @@ import EnvironmentDialog from '../components/EnvironmentDialog.vue'
 import CollectionDialog from '../components/CollectionDialog.vue'
 import ImportDialog from '../components/ImportDialog.vue'
 import { useWorkspaceStore } from '../stores/workspace'
-// 临时本地类型定义
-interface ApiCollection {
-  id: string
-  name: string
-  description?: string
-  requests: any[]
-  tags?: string[]
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface Environment {
-  id: string
-  name: string
-  variables: any[]
-  isActive: boolean
-}
+import type { ApiCollection, Environment } from '@shared/types'
 
 interface RequestConfig {
   method: string
@@ -202,7 +186,7 @@ const closeTab = (tabId: string) => {
   }
 }
 
-const handleSendRequest = async (request: RequestConfig) => {
+const handleSendRequest = async () => {
   // 发送请求逻辑
   ElMessage.success('请求已发送')
 }

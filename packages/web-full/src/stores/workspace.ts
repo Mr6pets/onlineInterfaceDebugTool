@@ -1,84 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
-// 临时类型定义，避免导入问题
-interface Workspace {
-  id: string
-  name: string
-  description?: string
-  collections: string[]
-  environments: string[]
-  settings: WorkspaceSettings
-  createdAt: Date
-  updatedAt: Date
-}
+import type {
+  Workspace,
+  WorkspaceSettings,
+  Environment,
+  ApiCollection,
+  BatchTest,
+  User,
+  Team,
+  TeamMember,
+  TeamRole,
+  ShareLink,
+  Permission,
+  PermissionAction,
+  ImportData,
+  ExportData
+} from '@shared/types'
 
-interface WorkspaceSettings {
-  timeout: number
-  followRedirects: boolean
-  validateSSL: boolean
-  maxRedirects: number
-  requestDelay: number
-}
-
-interface Environment {
-  id: string
-  name: string
-  variables: Record<string, string>
-  isActive: boolean
-  baseUrl?: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface ApiCollection {
-  id: string
-  name: string
-  description?: string
-  folders: any[]
-  requests: any[]
-  variables?: Record<string, string>
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface BatchTest {
-  id: string
-  name: string
-  requests: any[]
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-}
-
-interface Team {
-  id: string
-  name: string
-}
-
-interface TeamMember {
-  id: string
-  name: string
-}
-
-interface ShareLink {
-  id: string
-  resourceType: 'collection' | 'environment'
-  resourceId: string
-  permission: 'read' | 'write'
-  token: string
-  createdBy: string
-  createdAt: Date
-  expiresAt: Date
-  isActive: boolean
-  accessCount: number
-}
-
+// 本地特定类型定义
 interface ActivityLog {
   id: string
   userId: string
@@ -91,25 +30,6 @@ interface ActivityLog {
 
 interface DataSync {
   status: string
-}
-
-interface Permission {
-  userId: string
-  action: string
-  resource: string
-}
-
-interface ImportData {
-  type: 'postman' | 'openapi' | 'insomnia'
-  data: any
-}
-
-interface ExportData {
-  workspace?: Workspace
-  collections: ApiCollection[]
-  environments: Environment[]
-  version: string
-  exportedAt: Date
 }
 
 // 简单的存储工具
@@ -155,13 +75,12 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   const lastSyncTime = ref<Date | null>(null)
   
   // 计算属性
-  const hasPermission = computed(() => (action: string, resource: string) => {
+  const hasPermission = computed(() => (action: PermissionAction, resource: string) => {
     if (!currentUser.value) return false
-    if (currentUser.value.role === 'owner' || currentUser.value.role === 'admin') return true
+    if ((currentUser.value.role as TeamRole) === 'owner' || (currentUser.value.role as TeamRole) === 'admin') return true
     
     return permissions.value.some(p => 
-      p.userId === currentUser.value?.id && 
-      p.action === action && 
+      p.actions.includes(action) && 
       p.resource === resource
     )
   })
@@ -175,11 +94,11 @@ export const useWorkspaceStore = defineStore('workspace', () => {
   )
   
   const canCreateCollection = computed(() => 
-    hasPermission.value('create', 'collection')
+    hasPermission.value('write', 'collection')
   )
   
   const isWorkspaceOwner = computed(() => 
-    currentUser.value?.role === 'owner'
+    (currentUser.value?.role as TeamRole) === 'owner'
   )
   
   const activeEnvironment = computed(() => 
@@ -214,6 +133,9 @@ export const useWorkspaceStore = defineStore('workspace', () => {
           description: '默认工作空间',
           collections: [],
           environments: [],
+          isPublic: false,
+          ownerId: 'default-user',
+          members: ['default-user'],
           settings: {
             timeout: 30000,
             followRedirects: true,
@@ -233,7 +155,6 @@ export const useWorkspaceStore = defineStore('workspace', () => {
           name: '默认环境',
           variables: {},
           isActive: true,
-          baseUrl: '',
           createdAt: new Date(),
           updatedAt: new Date()
         }
@@ -616,15 +537,16 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     
     const inviteTeamMember = async (email: string, role: 'admin' | 'member' | 'viewer') => {
       try {
-        const invitation: TeamMember = {
+        const invitation = {
           id: `member-${Date.now()}`,
           userId: `user-${Date.now()}`,
-          teamId: currentTeam.value?.id || '',
-          role,
-          status: 'pending',
+          email: email,
+          name: email.split('@')[0],
+          role: role as TeamRole,
+          permissions: [],
+          joinedAt: new Date(),
           invitedBy: currentUser.value?.id || '',
-          invitedAt: new Date(),
-          joinedAt: null
+          status: 'invited' as const
         }
         
         teamMembers.value.push(invitation)
@@ -633,7 +555,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
         await logActivity({
           action: 'invite',
           resource: 'team_member',
-          resourceId: invitation.id,
+          resourceId: invitation.userId,
           details: `邀请团队成员: ${email}`
         })
         
@@ -648,7 +570,7 @@ export const useWorkspaceStore = defineStore('workspace', () => {
     
     const removeTeamMember = async (memberId: string) => {
       try {
-        const memberIndex = teamMembers.value.findIndex(m => m.id === memberId)
+        const memberIndex = teamMembers.value.findIndex(m => m.userId === memberId)
         if (memberIndex === -1) return
         
         const member = teamMembers.value[memberIndex]
@@ -673,10 +595,14 @@ export const useWorkspaceStore = defineStore('workspace', () => {
       try {
         const shareLink: ShareLink = {
           id: `share-${Date.now()}`,
-          resourceType,
+          type: resourceType,
           resourceId,
-          permission,
-          token: `token-${Math.random().toString(36).substr(2, 9)}`,
+          title: `分享链接-${resourceType}`,
+          permissions: [{
+            action: permission === 'read' ? 'view' : 'edit',
+            public: true
+          }],
+          allowComments: false,
           createdBy: currentUser.value?.id || '',
           createdAt: new Date(),
           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7天后过期

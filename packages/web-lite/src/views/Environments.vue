@@ -86,7 +86,7 @@
                   当前环境
                 </el-tag>
                 
-                <el-dropdown @command="(command) => handleEnvAction(command, env)">
+                <el-dropdown @command="(command: string) => handleEnvAction(command, env)">
                   <el-button type="text" size="small">
                     <el-icon><MoreFilled /></el-icon>
                   </el-button>

@@ -63,9 +63,7 @@
             <el-input v-model="selectedEnvironment.name" placeholder="环境名称" />
           </el-form-item>
           
-          <el-form-item label="基础URL">
-            <el-input v-model="selectedEnvironment.baseUrl" placeholder="https://api.example.com" />
-          </el-form-item>
+
           
           <el-form-item label="状态">
             <el-switch
@@ -130,19 +128,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import { CopyDocument, Delete } from '@element-plus/icons-vue'
-// 临时本地类型定义
-interface Environment {
-  id: string
-  name: string
-  description?: string
-  variables: any[]
-  isActive: boolean
-  groupId?: string
-  createdAt: Date
-  updatedAt: Date
-}
+import type { Environment } from '@shared/types'
 
 const props = defineProps<{
   modelValue: boolean
@@ -157,7 +145,7 @@ const emit = defineEmits<{
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: (val) => emit('update:modelValue', val)
 })
 
 const selectedEnvironment = ref<Environment | null>(null)
@@ -180,7 +168,6 @@ const addEnvironment = () => {
     name: '新环境',
     variables: {},
     isActive: false,
-    baseUrl: '',
     createdAt: new Date(),
     updatedAt: new Date()
   }

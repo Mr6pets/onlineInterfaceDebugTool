@@ -253,7 +253,7 @@ export const useRequestStore = defineStore('request', () => {
     const headers = historyItem.request.headers ? 
       Object.entries(historyItem.request.headers).map(([key, value]) => ({
         key,
-        value,
+        value: String(value),
         enabled: true
       })) : []
     
@@ -261,7 +261,7 @@ export const useRequestStore = defineStore('request', () => {
     const params = historyItem.request.params ? 
       Object.entries(historyItem.request.params).map(([key, value]) => ({
         key,
-        value,
+        value: String(value),
         enabled: true
       })) : []
     

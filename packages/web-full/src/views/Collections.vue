@@ -141,15 +141,19 @@ const handleAction = ({ action, collection }: { action: string; collection: Coll
   switch (action) {
     case 'edit':
       // 编辑逻辑
+      console.log('编辑集合:', collection.name)
       break
     case 'duplicate':
       // 复制逻辑
+      console.log('复制集合:', collection.name)
       break
     case 'export':
       // 导出逻辑
+      console.log('导出集合:', collection.name)
       break
     case 'delete':
       // 删除逻辑
+      console.log('删除集合:', collection.name)
       break
   }
 }

@@ -329,7 +329,7 @@
                   @change="handleFileImport"
                   class="hidden"
                 />
-                <button @click="$refs.fileInput?.click()" class="btn btn-secondary">
+                <button @click="fileInput?.click()" class="btn btn-secondary">
                   <Upload class="w-4 h-4 mr-2" />
                   选择文件导入
                 </button>
@@ -465,7 +465,7 @@ const tabs = [
 
 // 响应式数据
 const activeTab = ref('workspace')
-const fileInput = ref<HTMLInputElement>()
+const fileInput = ref<HTMLInputElement | null>(null)
 
 // 工作空间设置
 const workspaceSettings = ref({
@@ -523,10 +523,10 @@ const loadSettings = () => {
     workspaceSettings.value = {
       name: currentWorkspace.name,
       description: currentWorkspace.description || '',
-      defaultEnvironment: currentWorkspace.defaultEnvironment || '',
-      autoSave: currentWorkspace.settings?.autoSave ?? true,
-      enableHistory: currentWorkspace.settings?.enableHistory ?? true,
-      historyRetentionDays: currentWorkspace.settings?.historyRetentionDays ?? 30
+      defaultEnvironment: currentWorkspace.activeEnvironment || '',
+      autoSave: true,
+      enableHistory: true,
+      historyRetentionDays: 30
     }
   }
 
@@ -558,13 +558,12 @@ const saveSettings = async () => {
   try {
     // 保存工作空间设置
     if (workspaceStore.currentWorkspace) {
-      await workspaceStore.updateWorkspaceSettings(workspaceStore.currentWorkspace.id, {
-        name: workspaceSettings.value.name,
-        description: workspaceSettings.value.description,
-        defaultEnvironment: workspaceSettings.value.defaultEnvironment,
-        autoSave: workspaceSettings.value.autoSave,
-        enableHistory: workspaceSettings.value.enableHistory,
-        historyRetentionDays: workspaceSettings.value.historyRetentionDays
+      await workspaceStore.updateWorkspaceSettings({
+        timeout: workspaceStore.currentWorkspace.settings?.timeout || 30000,
+        followRedirects: workspaceStore.currentWorkspace.settings?.followRedirects ?? true,
+        validateSSL: workspaceStore.currentWorkspace.settings?.validateSSL ?? true,
+        maxRedirects: workspaceStore.currentWorkspace.settings?.maxRedirects || 5,
+        requestDelay: workspaceStore.currentWorkspace.settings?.requestDelay || 0
       })
     }
 
@@ -633,7 +632,7 @@ const changePassword = async () => {
 
 const exportData = async (format: string) => {
   try {
-    const data = await workspaceStore.exportData(format)
+    const data = workspaceStore.exportWorkspace()
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -695,7 +694,9 @@ const resetWorkspace = async () => {
   if (confirm('确定要重置工作空间吗？这将删除所有数据，此操作不可撤销！')) {
     if (confirm('请再次确认：这将永久删除所有工作空间数据！')) {
       try {
-        await workspaceStore.clearWorkspaceData()
+        // 清理工作空间数据
+        localStorage.clear()
+        sessionStorage.clear()
         alert('工作空间已重置')
         // 重新加载页面
         window.location.reload()

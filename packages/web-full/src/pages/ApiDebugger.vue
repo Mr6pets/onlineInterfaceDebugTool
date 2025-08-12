@@ -34,7 +34,7 @@
           :highlight-current="true"
           @node-click="handleNodeClick"
         >
-          <template #default="{ node, data }">
+          <template #default="{ data }">
             <div class="tree-node">
               <div class="node-content">
                 <el-icon class="node-icon">
@@ -54,7 +54,7 @@
               </div>
               <div class="node-actions">
                 <el-dropdown
-                  @command="(command) => handleNodeAction(command, data)"
+                  @command="(command: string) => handleNodeAction(command, data)"
                   trigger="click"
                   @click.stop
                 >
@@ -374,7 +374,7 @@
                           v-else
                           :auto-upload="false"
                           :show-file-list="false"
-                          @change="(file) => handleFileChange(file, item)"
+                          @change="(file: any) => handleFileChange(file, item)"
                         >
                           <el-button size="small">选择文件</el-button>
                         </el-upload>
@@ -676,7 +676,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
 import {
   Plus,
@@ -694,34 +694,80 @@ import {
   WarningFilled
 } from '@element-plus/icons-vue'
 import { useCollectionStore } from '@/stores/collection'
-import { useEnvironmentStore } from '@/stores/environment'
-// 临时本地类型定义
-interface Collection {
+import type { ApiCollection, Environment } from '@shared/types'
+
+// 定义接口
+interface TabItem {
   id: string
   name: string
-  description?: string
-  requests: ApiRequest[]
+  method: string
+  modified: boolean
 }
 
-interface ApiRequest {
+interface RequestParam {
+  key: string
+  value: string
+  description: string
+  enabled: boolean
+}
+
+interface RequestHeader {
+  key: string
+  value: string
+  description: string
+  enabled: boolean
+}
+
+interface FormDataItem {
+  key: string
+  value: string
+  type: 'text' | 'file'
+  enabled: boolean
+  file?: File
+}
+
+interface RequestData {
   id: string
   name: string
   method: string
   url: string
-  headers?: Record<string, string>
-  params?: Record<string, string>
-  body?: any
+  params: RequestParam[]
+  headers: RequestHeader[]
+  bodyType: 'none' | 'form-data' | 'raw'
+  formData: FormDataItem[]
+  rawBody: string
+  rawType: 'json' | 'xml' | 'text'
+  authType: 'none' | 'bearer' | 'basic' | 'apikey'
+  auth: Record<string, any>
+  tests: string
 }
 
-interface Environment {
-  id: string
+interface ResponseData {
+  status: number
+  statusText: string
+  time: number
+  size: number
+  headers: Record<string, string>
+  data: string
+}
+
+interface TestResult {
   name: string
-  variables: any[]
-  isActive: boolean
+  passed: boolean
+  error?: string
+}
+
+interface TreeNode {
+  id: string
+  label: string
+  type: 'collection' | 'request' | 'folder'
+  method?: string
+  url?: string
+  children?: TreeNode[]
 }
 
 const collectionStore = useCollectionStore()
-const environmentStore = useEnvironmentStore()
+
 
 // 响应式数据
 const searchQuery = ref('')
@@ -740,16 +786,16 @@ const treeRef = ref()
 const createRequestFormRef = ref<FormInstance>()
 
 // 打开的标签页
-const openTabs = ref<any[]>([])
+const openTabs = ref<TabItem[]>([])
 
 // 当前请求
-const currentRequest = ref<any>(null)
+const currentRequest = ref<RequestData | null>(null)
 
 // 响应数据
-const response = ref<any>(null)
+const response = ref<ResponseData | null>(null)
 
 // 测试结果
-const testResults = ref<any[]>([])
+const testResults = ref<TestResult[]>([])
 
 // 创建请求表单
 const createRequestForm = ref({
@@ -760,15 +806,16 @@ const createRequestForm = ref({
 })
 
 // 模拟数据
-const collections = ref<Collection[]>([
+const collections = ref<ApiCollection[]>([
   {
     id: '1',
     name: '用户管理API',
     description: '用户相关接口',
+    folders: [],
+    requests: [],
+    variables: {},
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1',
-    workspaceId: '1'
+    updatedAt: new Date()
   }
 ])
 
@@ -776,16 +823,15 @@ const environments = ref<Environment[]>([
   {
     id: '1',
     name: '开发环境',
-    variables: [{ key: 'baseUrl', value: 'https://dev-api.example.com' }],
-    workspaceId: '1',
+    variables: { baseUrl: 'https://dev-api.example.com' },
+    isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   }
 ])
 
 // 树形数据
-const treeData = ref([
+const treeData = ref<TreeNode[]>([
   {
     id: '1',
     label: '用户管理API',
@@ -841,8 +887,8 @@ const createRequestFormRules: FormRules = {
 const filteredTreeData = computed(() => {
   if (!searchQuery.value) return treeData.value
   
-  const filterTree = (nodes: any[]): any[] => {
-    return nodes.reduce((filtered: any[], node: any) => {
+  const filterTree = (nodes: TreeNode[]): TreeNode[] => {
+    return nodes.reduce((filtered: TreeNode[], node: TreeNode) => {
       const matchesSearch = node.label.toLowerCase().includes(searchQuery.value.toLowerCase())
       const children = node.children ? filterTree(node.children) : []
       
@@ -898,13 +944,13 @@ const formatJson = (data: any) => {
   }
 }
 
-const handleNodeClick = (data: any) => {
+const handleNodeClick = (data: TreeNode) => {
   if (data.type === 'request') {
     openRequest(data)
   }
 }
 
-const handleNodeAction = async (command: string, data: any) => {
+const handleNodeAction = async (command: string, data: TreeNode) => {
   switch (command) {
     case 'addFolder':
       ElMessage.info('添加文件夹功能开发中')
@@ -925,7 +971,7 @@ const handleNodeAction = async (command: string, data: any) => {
   }
 }
 
-const handleDeleteNode = async (data: any) => {
+const handleDeleteNode = async (data: TreeNode) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除 "${data.label}" 吗？`,
@@ -943,7 +989,7 @@ const handleDeleteNode = async (data: any) => {
   }
 }
 
-const openRequest = (requestData: any) => {
+const openRequest = (requestData: TreeNode) => {
   // 检查是否已经打开
   const existingTab = openTabs.value.find(tab => tab.id === requestData.id)
   if (existingTab) {
@@ -955,7 +1001,7 @@ const openRequest = (requestData: any) => {
   const newTab = {
     id: requestData.id,
     name: requestData.label,
-    method: requestData.method,
+    method: requestData.method || 'GET',
     modified: false
   }
   
@@ -966,12 +1012,12 @@ const openRequest = (requestData: any) => {
   loadRequest(requestData)
 }
 
-const loadRequest = (requestData: any) => {
+const loadRequest = (requestData: TreeNode) => {
   currentRequest.value = {
     id: requestData.id,
     name: requestData.label,
-    method: requestData.method,
-    url: requestData.url,
+    method: requestData.method || 'GET',
+    url: requestData.url || '',
     params: [
       { key: '', value: '', description: '', enabled: true }
     ],
@@ -1006,7 +1052,7 @@ const closeTab = (tabId: string) => {
   }
 }
 
-const switchTab = (tab: any) => {
+const switchTab = (tab: { paneName: string }) => {
   activeTab.value = tab.paneName
   // 加载对应的请求数据
 }
@@ -1019,6 +1065,7 @@ const markAsModified = () => {
 }
 
 const addParam = () => {
+  if (!currentRequest.value) return
   currentRequest.value.params.push({
     key: '',
     value: '',
@@ -1029,11 +1076,13 @@ const addParam = () => {
 }
 
 const removeParam = (index: number) => {
+  if (!currentRequest.value) return
   currentRequest.value.params.splice(index, 1)
   markAsModified()
 }
 
 const addHeader = () => {
+  if (!currentRequest.value) return
   currentRequest.value.headers.push({
     key: '',
     value: '',
@@ -1044,11 +1093,13 @@ const addHeader = () => {
 }
 
 const removeHeader = (index: number) => {
+  if (!currentRequest.value) return
   currentRequest.value.headers.splice(index, 1)
   markAsModified()
 }
 
 const addFormData = () => {
+  if (!currentRequest.value) return
   currentRequest.value.formData.push({
     key: '',
     value: '',
@@ -1059,17 +1110,19 @@ const addFormData = () => {
 }
 
 const removeFormData = (index: number) => {
+  if (!currentRequest.value) return
   currentRequest.value.formData.splice(index, 1)
   markAsModified()
 }
 
-const handleFileChange = (file: UploadFile, item: any) => {
+const handleFileChange = (file: UploadFile, item: FormDataItem) => {
   item.value = file.name
   item.file = file.raw
   markAsModified()
 }
 
 const formatRawBody = () => {
+  if (!currentRequest.value) return
   if (currentRequest.value.rawType === 'json') {
     try {
       const parsed = JSON.parse(currentRequest.value.rawBody)
@@ -1082,6 +1135,7 @@ const formatRawBody = () => {
 }
 
 const insertTestTemplate = () => {
+  if (!currentRequest.value) return
   const template = `// 状态码测试
 pm.test('Status code is 200', function () {
     pm.response.to.have.status(200);
@@ -1154,7 +1208,23 @@ const saveRequest = async () => {
   
   saving.value = true
   try {
-    await collectionStore.saveRequest(currentRequest.value)
+    // 转换 headers 数组为对象
+    const headersObj: Record<string, string> = {}
+    currentRequest.value.headers.forEach(header => {
+      if (header.enabled && header.key && header.value) {
+        headersObj[header.key] = header.value
+      }
+    })
+    
+    await collectionStore.createRequest('collection-1', {
+      name: currentRequest.value.name,
+      request: {
+        url: currentRequest.value.url,
+        method: currentRequest.value.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS',
+        headers: headersObj,
+        data: currentRequest.value.rawBody
+      }
+    })
     
     // 标记为未修改
     const tab = openTabs.value.find(tab => tab.id === activeTab.value)
@@ -1177,7 +1247,13 @@ const handleCreateRequest = async () => {
     await createRequestFormRef.value.validate()
     creating.value = true
     
-    const newRequest = await collectionStore.createRequest(createRequestForm.value)
+    await collectionStore.createRequest(createRequestForm.value.collectionId, {
+      name: createRequestForm.value.name,
+      request: {
+        method: createRequestForm.value.method as 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'HEAD' | 'OPTIONS',
+        url: createRequestForm.value.url
+      }
+    })
     
     showCreateRequestDialog.value = false
     resetCreateRequestForm()

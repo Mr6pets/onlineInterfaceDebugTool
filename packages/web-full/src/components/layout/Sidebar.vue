@@ -104,15 +104,15 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { 
   Setting, Fold, Expand, User,
-  House, Folder, Document, DataAnalysis,
-  Monitor, Operation, Avatar, Tools,
-  DataBoard, Histogram, 
-  Files, Clock, Bell
+  House, Folder,
+  Monitor, Operation, Avatar,
+  DataBoard,
+  Files, Clock
 } from '@element-plus/icons-vue'
-import { useWorkspaceStore } from '@/stores/workspace'
+
 // 临时类型定义
 type UserRole = 'admin' | 'project_lead' | 'developer' | 'tester' | 'guest'
 
@@ -138,8 +138,6 @@ defineEmits<{
 }>()
 
 const route = useRoute()
-const router = useRouter()
-const workspaceStore = useWorkspaceStore()
 
 // 模拟当前用户数据
 const currentUser = ref<UserType>({

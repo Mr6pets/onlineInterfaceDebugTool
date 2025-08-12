@@ -43,12 +43,12 @@
           
           <div class="response-info" v-if="item.response">
             <el-tag 
-              :type="getStatusType(item.response.status)" 
+              :type="getStatusType(item.response?.status || 0)" 
               size="small"
             >
-              {{ item.response.status }}
+              {{ item.response?.status || 'N/A' }}
             </el-tag>
-            <span class="duration">{{ item.response.duration }}ms</span>
+            <span class="duration">{{ item.response?.duration || 0 }}ms</span>
           </div>
           
           <div class="timestamp">
@@ -66,7 +66,7 @@
               size="small" 
               text 
               type="danger"
-              @click.stop="removeHistoryItem(index)"
+              @click.stop="removeHistoryItem(item, index)"
               :icon="Delete"
             />
           </div>
@@ -80,8 +80,9 @@
 import { ref, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Delete, CopyDocument } from '@element-plus/icons-vue'
-import { useRequestStore } from '../stores/request'
-import type { RequestConfig } from '@api-debug-tool/shared/types'
+import { useRequestStore } from '@/stores/request'
+import { useHistoryStore } from '@/stores/history'
+import type { RequestConfig } from '@/types'
 import dayjs from 'dayjs'
 
 const props = defineProps<{
@@ -94,6 +95,7 @@ const emit = defineEmits<{
 }>()
 
 const requestStore = useRequestStore()
+const historyStore = useHistoryStore()
 const searchText = ref('')
 
 const visible = computed({
@@ -102,9 +104,9 @@ const visible = computed({
 })
 
 const filteredHistory = computed(() => {
-  if (!searchText.value) return requestStore.history
+  if (!searchText.value) return historyStore.items
   
-  return requestStore.history.filter(item => 
+  return historyStore.items.filter(item => 
     item.request.url.toLowerCase().includes(searchText.value.toLowerCase()) ||
     item.request.method.toLowerCase().includes(searchText.value.toLowerCase())
   )
@@ -128,7 +130,7 @@ const getStatusType = (status: number) => {
   return 'info'
 }
 
-const formatTime = (timestamp: Date) => {
+const formatTime = (timestamp: number) => {
   return dayjs(timestamp).format('MM-DD HH:mm:ss')
 }
 
@@ -143,13 +145,13 @@ const duplicateRequest = (request: RequestConfig) => {
   ElMessage.success('请求已复制')
 }
 
-const removeHistoryItem = async (index: number) => {
+const removeHistoryItem = async (historyItem: any, index: number) => {
   try {
     await ElMessageBox.confirm('确定要删除这条历史记录吗？', '确认删除', {
       type: 'warning'
     })
     
-    requestStore.history.splice(index, 1)
+    historyStore.removeItem(historyItem.id)
     ElMessage.success('历史记录已删除')
   } catch {
     // 用户取消
@@ -162,7 +164,7 @@ const clearHistory = async () => {
       type: 'warning'
     })
     
-    requestStore.clearHistory()
+    historyStore.clearHistory()
     ElMessage.success('历史记录已清空')
   } catch {
     // 用户取消

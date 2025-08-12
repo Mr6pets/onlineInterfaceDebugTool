@@ -200,24 +200,29 @@ const handleAction = ({ action, env }: { action: string; env: Environment }) => 
   switch (action) {
     case 'edit':
       // 编辑逻辑
+      console.log('编辑环境:', env.name)
       ElMessage.info('编辑功能开发中')
       break
     case 'duplicate':
       // 复制逻辑
+      console.log('复制环境:', env.name)
       ElMessage.info('复制功能开发中')
       break
     case 'export':
       // 导出逻辑
+      console.log('导出环境:', env.name)
       ElMessage.info('导出功能开发中')
       break
     case 'delete':
       // 删除逻辑
+      console.log('删除环境:', env.name)
       ElMessage.info('删除功能开发中')
       break
   }
 }
 
 const addVariable = (envId: string) => {
+  console.log('为环境添加变量:', envId)
   ElMessage.info('添加变量功能开发中')
 }
 

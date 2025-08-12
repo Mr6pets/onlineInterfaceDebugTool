@@ -50,17 +50,19 @@ export const useHistoryStore = defineStore('history', () => {
   })
   
   // 添加历史记录项
-  const addItem = (item: Omit<HistoryItem, 'id'>) => {
+  const addItem = (item: Partial<HistoryItem>) => {
     const newItem: HistoryItem = {
       ...item,
-      id: item.id || Date.now().toString()
+      id: item.id || Date.now().toString(),
+      request: item.request!,
+      timestamp: item.timestamp || Date.now()
     }
     
     // 检查是否已存在相同的请求
     const existingIndex = items.value.findIndex(existing => 
       existing.request.url === newItem.request.url &&
       existing.request.method === newItem.request.method &&
-      JSON.stringify(existing.request.data) === JSON.stringify(newItem.request.data)
+      JSON.stringify(existing.request.body) === JSON.stringify(newItem.request.body)
     )
     
     if (existingIndex !== -1) {

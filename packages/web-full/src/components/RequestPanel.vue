@@ -42,37 +42,36 @@
         <el-tab-pane label="参数" name="params">
           <div class="params-section">
             <div class="section-header">
-              <span>Query 参数</span>
-              <el-button size="small" @click="addParam">
-                <el-icon><Plus /></el-icon>
-                添加参数
-              </el-button>
+              <span>查询参数</span>
             </div>
             <div class="params-list">
               <div 
-                v-for="(param, index) in localRequest.params" 
-                :key="index"
+                v-for="(_, key) in localRequest.params" 
+                :key="key"
                 class="param-item"
               >
-                <el-checkbox v-model="param.enabled" />
                 <el-input 
-                  v-model="param.key" 
+                  :model-value="key" 
                   placeholder="参数名"
-                  @input="updateRequest"
+                  @input="(newKey: string) => updateParamKey(key, newKey)"
                 />
                 <el-input 
-                  v-model="param.value" 
+                  v-model="localRequest.params![key]" 
                   placeholder="参数值"
                   @input="updateRequest"
                 />
                 <el-button 
                   size="small" 
                   text 
-                  @click="removeParam(index)"
+                  @click="removeParam(key)"
                 >
                   <el-icon><Delete /></el-icon>
                 </el-button>
               </div>
+              <el-button size="small" @click="showAddParamDialog">
+                <el-icon><Plus /></el-icon>
+                添加参数
+              </el-button>
             </div>
           </div>
         </el-tab-pane>
@@ -81,36 +80,35 @@
           <div class="headers-section">
             <div class="section-header">
               <span>请求头</span>
-              <el-button size="small" @click="addHeader">
-                <el-icon><Plus /></el-icon>
-                添加请求头
-              </el-button>
             </div>
             <div class="headers-list">
               <div 
-                v-for="(header, index) in localRequest.headers" 
-                :key="index"
+                v-for="(_, key) in localRequest.headers" 
+                :key="key"
                 class="header-item"
               >
-                <el-checkbox v-model="header.enabled" />
                 <el-input 
-                  v-model="header.key" 
+                  :model-value="key" 
                   placeholder="请求头名称"
-                  @input="updateRequest"
+                  @input="(newKey: string) => updateHeaderKey(key, newKey)"
                 />
                 <el-input 
-                  v-model="header.value" 
+                  v-model="localRequest.headers![key]" 
                   placeholder="请求头值"
                   @input="updateRequest"
                 />
                 <el-button 
                   size="small" 
                   text 
-                  @click="removeHeader(index)"
+                  @click="removeHeader(key)"
                 >
                   <el-icon><Delete /></el-icon>
                 </el-button>
               </div>
+              <el-button size="small" @click="showAddHeaderDialog">
+                <el-icon><Plus /></el-icon>
+                添加请求头
+              </el-button>
             </div>
           </div>
         </el-tab-pane>
@@ -222,22 +220,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete } from '@element-plus/icons-vue'
+import type { Environment } from '@shared/types'
 
 interface RequestConfig {
   url: string
   method: string
-  params?: Array<{ key: string; value: string; enabled: boolean }>
-  headers?: Array<{ key: string; value: string; enabled: boolean }>
+  params?: Record<string, string>
+  headers?: Record<string, string>
   body?: string
-}
-
-interface Environment {
-  id: string
-  name: string
-  variables: Record<string, string>
 }
 
 interface Props {
@@ -254,8 +247,8 @@ const emit = defineEmits<{
 const localRequest = reactive<RequestConfig>({
   url: '',
   method: 'GET',
-  params: [],
-  headers: [],
+  params: {},
+  headers: {},
   body: ''
 })
 
@@ -271,8 +264,8 @@ watch(() => props.request, (newRequest) => {
   Object.assign(localRequest, {
     url: newRequest.url || '',
     method: newRequest.method || 'GET',
-    params: newRequest.params || [],
-    headers: newRequest.headers || [],
+    params: newRequest.params || {},
+    headers: newRequest.headers || {},
     body: newRequest.body || ''
   })
 }, { immediate: true, deep: true })
@@ -281,26 +274,62 @@ const updateRequest = () => {
   emit('update:request', { ...localRequest })
 }
 
-const addParam = () => {
-  if (!localRequest.params) localRequest.params = []
-  localRequest.params.push({ key: '', value: '', enabled: true })
+const addParam = (key: string, value: string) => {
+  if (!localRequest.params) localRequest.params = {}
+  localRequest.params[key] = value
   updateRequest()
 }
 
-const removeParam = (index: number) => {
-  localRequest.params?.splice(index, 1)
+const removeParam = (key: string) => {
+  if (localRequest.params) {
+    delete localRequest.params[key]
+  }
   updateRequest()
 }
 
-const addHeader = () => {
-  if (!localRequest.headers) localRequest.headers = []
-  localRequest.headers.push({ key: '', value: '', enabled: true })
+const updateParamKey = (oldKey: string, newKey: string) => {
+  if (localRequest.params && oldKey !== newKey) {
+    const value = localRequest.params[oldKey]
+    delete localRequest.params[oldKey]
+    localRequest.params[newKey] = value
+    updateRequest()
+  }
+}
+
+const showAddParamDialog = () => {
+  const key = prompt('请输入参数名:')
+  if (key) {
+    addParam(key, '')
+  }
+}
+
+const addHeader = (key: string, value: string) => {
+  if (!localRequest.headers) localRequest.headers = {}
+  localRequest.headers[key] = value
   updateRequest()
 }
 
-const removeHeader = (index: number) => {
-  localRequest.headers?.splice(index, 1)
+const removeHeader = (key: string) => {
+  if (localRequest.headers) {
+    delete localRequest.headers[key]
+  }
   updateRequest()
+}
+
+const updateHeaderKey = (oldKey: string, newKey: string) => {
+  if (localRequest.headers && oldKey !== newKey) {
+    const value = localRequest.headers[oldKey]
+    delete localRequest.headers[oldKey]
+    localRequest.headers[newKey] = value
+    updateRequest()
+  }
+}
+
+const showAddHeaderDialog = () => {
+  const key = prompt('请输入请求头名称:')
+  if (key) {
+    addHeader(key, '')
+  }
 }
 
 const addFormItem = () => {

@@ -695,21 +695,70 @@ import {
   Download,
   FolderOpened
 } from '@element-plus/icons-vue'
-// 临时本地类型定义
-interface BatchTestSuite {
+// 类型定义
+interface TestAssertion {
+  id: string
+  description: string
+  status: 'passed' | 'failed'
+}
+
+interface TestCase {
   id: string
   name: string
-  description?: string
-  tests: any[]
-  environment?: string
-  createdAt: Date
+  method: string
+  url: string
+  status: 'passed' | 'failed' | 'pending'
+  responseTime: number
+  assertions: TestAssertion[]
+}
+
+interface ExecutionHistory {
+  id: string
+  status: 'completed' | 'running' | 'failed'
+  startTime: Date
+  duration: number
+  passedCount: number
+  failedCount: number
+  totalCount: number
+}
+
+interface TestSuite {
+  id: string
+  name: string
+  description: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  environmentId: string
+  testCount: number
+  passRate: number
+  executionTime: number
+  progress: number
+  lastRunAt: Date
+  concurrency: number
+  timeout: number
+  failureStrategy: 'continue' | 'stop'
+  retryCount: number
+  delay: number
+  testCases: TestCase[]
+  executionHistory: ExecutionHistory[]
 }
 
 interface Environment {
   id: string
   name: string
   variables: any[]
-  isActive: boolean
+  workspaceId: string
+  createdAt: Date
+  updatedAt: Date
+  createdBy: string
+}
+
+interface CreateForm {
+  name: string
+  description: string
+  environmentId: string
+  concurrency: number
+  timeout: number
+  failureStrategy: 'continue' | 'stop'
 }
 
 // 响应式数据
@@ -724,7 +773,7 @@ const pageSize = ref(12)
 const selectedSuites = ref<string[]>([])
 const showCreateDialog = ref(false)
 const showDetailsDialog = ref(false)
-const selectedSuite = ref<any>(null)
+const selectedSuite = ref<TestSuite | null>(null)
 const detailsActiveTab = ref('test-cases')
 const creating = ref(false)
 
@@ -732,7 +781,7 @@ const creating = ref(false)
 const createFormRef = ref<FormInstance>()
 
 // 创建表单
-const createForm = ref({
+const createForm = ref<CreateForm>({
   name: '',
   description: '',
   environmentId: '',
@@ -742,7 +791,7 @@ const createForm = ref({
 })
 
 // 模拟数据
-const testSuites = ref<any[]>([
+const testSuites = ref<TestSuite[]>([
   {
     id: '1',
     name: '用户管理API测试',
@@ -1019,12 +1068,12 @@ const toggleSuiteSelection = (suiteId: string) => {
   }
 }
 
-const viewSuiteDetails = (suite: any) => {
+const viewSuiteDetails = (suite: TestSuite) => {
   selectedSuite.value = suite
   showDetailsDialog.value = true
 }
 
-const runSuite = async (suite: any) => {
+const runSuite = async (suite: TestSuite) => {
   if (suite.status === 'running') return
   
   suite.status = 'running'
@@ -1046,7 +1095,7 @@ const runSuite = async (suite: any) => {
   ElMessage.info(`开始执行测试套件 "${suite.name}"`)
 }
 
-const handleSuiteAction = async (command: string, suite: any) => {
+const handleSuiteAction = async (command: string, suite: TestSuite) => {
   switch (command) {
     case 'edit':
       await editSuite(suite)
@@ -1063,11 +1112,11 @@ const handleSuiteAction = async (command: string, suite: any) => {
   }
 }
 
-const editSuite = async (suite: any) => {
+const editSuite = async (suite: TestSuite) => {
   ElMessage.info('编辑功能开发中')
 }
 
-const duplicateSuite = async (suite: any) => {
+const duplicateSuite = async (suite: TestSuite) => {
   const newSuite = {
     ...suite,
     id: Date.now().toString(),
@@ -1081,7 +1130,7 @@ const duplicateSuite = async (suite: any) => {
   ElMessage.success('测试套件已复制')
 }
 
-const exportSuite = async (suite: any) => {
+const exportSuite = async (suite: TestSuite) => {
   const data = {
     name: suite.name,
     description: suite.description,
@@ -1106,7 +1155,7 @@ const exportSuite = async (suite: any) => {
   ElMessage.success('测试套件已导出')
 }
 
-const deleteSuite = async (suite: any) => {
+const deleteSuite = async (suite: TestSuite) => {
   try {
     await ElMessageBox.confirm(
       `确定要删除测试套件 "${suite.name}" 吗？`,
@@ -1225,11 +1274,11 @@ const importFromCollection = () => {
   ElMessage.info('从集合导入功能开发中')
 }
 
-const editTestCase = (testCase: any) => {
+const editTestCase = (testCase: TestCase) => {
   ElMessage.info('编辑测试用例功能开发中')
 }
 
-const runSingleTest = (testCase: any) => {
+const runSingleTest = (testCase: TestCase) => {
   ElMessage.info('单独执行测试功能开发中')
 }
 
@@ -1240,11 +1289,11 @@ const removeTestCase = (index: number) => {
   }
 }
 
-const viewExecutionReport = (execution: any) => {
+const viewExecutionReport = (execution: ExecutionHistory) => {
   ElMessage.info('查看执行报告功能开发中')
 }
 
-const downloadReport = (execution: any) => {
+const downloadReport = (execution: ExecutionHistory) => {
   ElMessage.info('下载报告功能开发中')
 }
 
