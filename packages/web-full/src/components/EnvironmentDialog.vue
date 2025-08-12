@@ -132,7 +132,17 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { CopyDocument, Delete } from '@element-plus/icons-vue'
-import type { Environment } from '@api-debug-tool/shared/types'
+// 临时本地类型定义
+interface Environment {
+  id: string
+  name: string
+  description?: string
+  variables: any[]
+  isActive: boolean
+  groupId?: string
+  createdAt: Date
+  updatedAt: Date
+}
 
 const props = defineProps<{
   modelValue: boolean

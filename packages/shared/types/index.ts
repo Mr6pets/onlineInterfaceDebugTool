@@ -181,7 +181,228 @@ export interface ExportData {
   exportedAt: Date;
 }
 
-// Pro版本新增类型
+// Full版本企业级类型定义
+
+// 用户和权限管理
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  role: UserRole;
+  permissions: Permission[];
+  workspaces: string[]; // workspace IDs
+  preferences: UserPreferences;
+  createdAt: Date;
+  lastLoginAt?: Date;
+  isActive: boolean;
+}
+
+export type UserRole = 'admin' | 'project_lead' | 'developer' | 'tester' | 'guest';
+
+export interface Permission {
+  resource: 'workspace' | 'collection' | 'environment' | 'test' | 'team' | 'settings';
+  actions: PermissionAction[];
+  scope?: 'own' | 'team' | 'all';
+}
+
+export type PermissionAction = 'read' | 'write' | 'delete' | 'share' | 'manage';
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'auto';
+  language: 'zh-CN' | 'en-US';
+  notifications: NotificationSettings;
+  editor: EditorSettings;
+}
+
+export interface NotificationSettings {
+  email: boolean;
+  browser: boolean;
+  testResults: boolean;
+  teamUpdates: boolean;
+}
+
+export interface EditorSettings {
+  fontSize: number;
+  tabSize: number;
+  wordWrap: boolean;
+  minimap: boolean;
+  theme: string;
+}
+
+// 团队协作
+export interface Team {
+  id: string;
+  name: string;
+  description?: string;
+  owner: string; // user ID
+  members: TeamMember[];
+  workspaces: string[]; // workspace IDs
+  settings: TeamSettings;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeamMember {
+  userId: string;
+  role: TeamRole;
+  permissions: Permission[];
+  joinedAt: Date;
+  invitedBy: string; // user ID
+  status: 'active' | 'invited' | 'suspended';
+}
+
+export type TeamRole = 'owner' | 'admin' | 'member' | 'viewer';
+
+export interface TeamSettings {
+  allowGuestAccess: boolean;
+  requireApproval: boolean;
+  defaultRole: TeamRole;
+  maxMembers: number;
+  visibility: 'private' | 'internal' | 'public';
+}
+
+// 分享和协作
+export interface ShareLink {
+  id: string;
+  type: 'workspace' | 'collection' | 'request' | 'environment';
+  resourceId: string;
+  title: string;
+  description?: string;
+  permissions: SharePermission[];
+  expiresAt?: Date;
+  password?: string;
+  allowComments: boolean;
+  createdBy: string; // user ID
+  createdAt: Date;
+  accessCount: number;
+  lastAccessedAt?: Date;
+}
+
+export interface SharePermission {
+  action: 'view' | 'edit' | 'comment';
+  users?: string[]; // user IDs
+  teams?: string[]; // team IDs
+  public?: boolean;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  author: string; // user ID
+  targetType: 'request' | 'collection' | 'workspace';
+  targetId: string;
+  parentId?: string; // for replies
+  mentions: string[]; // user IDs
+  attachments: CommentAttachment[];
+  createdAt: Date;
+  updatedAt?: Date;
+  isResolved: boolean;
+}
+
+export interface CommentAttachment {
+  id: string;
+  name: string;
+  type: 'image' | 'file';
+  url: string;
+  size: number;
+}
+
+// 高级测试功能
+export interface TestSuite {
+  id: string;
+  name: string;
+  description?: string;
+  workspaceId: string;
+  tests: TestCase[];
+  environment?: string;
+  schedule?: TestSchedule;
+  notifications: NotificationConfig[];
+  settings: TestSuiteSettings;
+  createdBy: string; // user ID
+  createdAt: Date;
+  updatedAt: Date;
+  lastRunAt?: Date;
+  status: 'idle' | 'running' | 'completed' | 'failed';
+}
+
+export interface TestSuiteSettings {
+  parallel: boolean;
+  timeout: number;
+  retries: number;
+  stopOnFailure: boolean;
+  generateReport: boolean;
+  reportFormat: 'html' | 'json' | 'junit';
+}
+
+export interface TestSchedule {
+  enabled: boolean;
+  cron: string;
+  timezone: string;
+  nextRun?: Date;
+  lastRun?: Date;
+}
+
+export interface TestResult {
+  id: string;
+  suiteId: string;
+  testId: string;
+  status: 'passed' | 'failed' | 'skipped' | 'error';
+  duration: number;
+  startTime: Date;
+  endTime: Date;
+  request?: RequestConfig;
+  response?: ResponseData;
+  assertions: AssertionResult[];
+  error?: string;
+  logs: TestLog[];
+}
+
+export interface AssertionResult {
+  id: string;
+  name: string;
+  type: TestCase['type'];
+  expected: any;
+  actual: any;
+  passed: boolean;
+  message: string;
+}
+
+export interface TestLog {
+  level: 'debug' | 'info' | 'warn' | 'error';
+  message: string;
+  timestamp: Date;
+  data?: any;
+}
+
+// 数据管理和同步
+export interface DataSync {
+  id: string;
+  type: 'backup' | 'restore' | 'sync';
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  progress: number; // 0-100
+  source: DataSource;
+  target: DataSource;
+  options: SyncOptions;
+  createdBy: string; // user ID
+  createdAt: Date;
+  completedAt?: Date;
+  error?: string;
+}
+
+export interface DataSource {
+  type: 'local' | 'cloud' | 'git' | 'database';
+  config: any;
+}
+
+export interface SyncOptions {
+  includeWorkspaces: boolean;
+  includeCollections: boolean;
+  includeEnvironments: boolean;
+  includeTests: boolean;
+  includeHistory: boolean;
+  conflictResolution: 'overwrite' | 'merge' | 'skip';
+}
 
 // 性能监控
 export interface PerformanceMetrics {
@@ -540,4 +761,253 @@ export interface MockServerSettings {
     cert?: string;
     key?: string;
   };
+}
+
+// 系统设置和配置
+export interface SystemSettings {
+  id: string;
+  general: GeneralSettings;
+  security: SecuritySettings;
+  integrations: IntegrationSettings;
+  notifications: SystemNotificationSettings;
+  backup: BackupSettings;
+  updatedBy: string; // user ID
+  updatedAt: Date;
+}
+
+export interface GeneralSettings {
+  siteName: string;
+  siteUrl: string;
+  defaultLanguage: string;
+  defaultTheme: string;
+  timezone: string;
+  dateFormat: string;
+  timeFormat: string;
+}
+
+export interface SecuritySettings {
+  passwordPolicy: PasswordPolicy;
+  sessionTimeout: number; // minutes
+  maxLoginAttempts: number;
+  lockoutDuration: number; // minutes
+  twoFactorAuth: boolean;
+  allowedDomains: string[];
+  ipWhitelist: string[];
+}
+
+export interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireNumbers: boolean;
+  requireSymbols: boolean;
+  maxAge: number; // days
+  preventReuse: number; // last N passwords
+}
+
+export interface IntegrationSettings {
+  git: GitIntegration;
+  ci: CIIntegration;
+  monitoring: MonitoringIntegration;
+  storage: StorageIntegration;
+}
+
+export interface GitIntegration {
+  enabled: boolean;
+  provider: 'github' | 'gitlab' | 'bitbucket';
+  apiUrl?: string;
+  token?: string;
+  defaultBranch: string;
+  autoSync: boolean;
+}
+
+export interface CIIntegration {
+  enabled: boolean;
+  provider: 'jenkins' | 'github-actions' | 'gitlab-ci' | 'azure-devops';
+  webhookUrl?: string;
+  apiKey?: string;
+  triggerOnChange: boolean;
+}
+
+export interface MonitoringIntegration {
+  enabled: boolean;
+  provider: 'datadog' | 'newrelic' | 'prometheus';
+  apiKey?: string;
+  endpoint?: string;
+  metrics: string[];
+}
+
+export interface StorageIntegration {
+  enabled: boolean;
+  provider: 'aws-s3' | 'azure-blob' | 'google-cloud';
+  bucket: string;
+  region?: string;
+  accessKey?: string;
+  secretKey?: string;
+}
+
+export interface SystemNotificationSettings {
+  email: EmailNotificationSettings;
+  slack: SlackNotificationSettings;
+  webhook: WebhookNotificationSettings;
+}
+
+export interface EmailNotificationSettings {
+  enabled: boolean;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  fromAddress: string;
+  fromName: string;
+}
+
+export interface SlackNotificationSettings {
+  enabled: boolean;
+  webhookUrl: string;
+  channel: string;
+  username: string;
+  iconEmoji: string;
+}
+
+export interface WebhookNotificationSettings {
+  enabled: boolean;
+  url: string;
+  headers: Record<string, string>;
+  events: string[];
+}
+
+export interface BackupSettings {
+  enabled: boolean;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  retention: number; // days
+  destination: DataSource;
+  encryption: boolean;
+  compression: boolean;
+}
+
+// 活动日志和审计
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  action: ActivityAction;
+  resource: ActivityResource;
+  resourceId: string;
+  details: Record<string, any>;
+  ipAddress: string;
+  userAgent: string;
+  timestamp: Date;
+  success: boolean;
+  error?: string;
+}
+
+export type ActivityAction = 
+  | 'create' | 'read' | 'update' | 'delete'
+  | 'login' | 'logout' | 'invite' | 'join'
+  | 'share' | 'unshare' | 'export' | 'import'
+  | 'test' | 'deploy' | 'backup' | 'restore';
+
+export type ActivityResource = 
+  | 'user' | 'team' | 'workspace' | 'collection'
+  | 'request' | 'environment' | 'test' | 'settings'
+  | 'share' | 'comment' | 'integration';
+
+// 统计和分析
+export interface Analytics {
+  id: string;
+  type: 'usage' | 'performance' | 'error' | 'user';
+  period: AnalyticsPeriod;
+  data: AnalyticsData;
+  generatedAt: Date;
+}
+
+export interface AnalyticsPeriod {
+  start: Date;
+  end: Date;
+  granularity: 'hour' | 'day' | 'week' | 'month';
+}
+
+export interface AnalyticsData {
+  metrics: AnalyticsMetric[];
+  dimensions: AnalyticsDimension[];
+  filters?: AnalyticsFilter[];
+}
+
+export interface AnalyticsMetric {
+  name: string;
+  value: number;
+  unit?: string;
+  change?: number; // percentage change from previous period
+  trend?: 'up' | 'down' | 'stable';
+}
+
+export interface AnalyticsDimension {
+  name: string;
+  values: AnalyticsDimensionValue[];
+}
+
+export interface AnalyticsDimensionValue {
+  label: string;
+  value: number;
+  percentage: number;
+}
+
+export interface AnalyticsFilter {
+  field: string;
+  operator: 'equals' | 'not_equals' | 'contains' | 'in' | 'between';
+  value: any;
+}
+
+// 插件和扩展
+export interface Plugin {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  category: PluginCategory;
+  type: PluginType;
+  config: PluginConfig;
+  permissions: PluginPermission[];
+  status: PluginStatus;
+  installedAt: Date;
+  updatedAt: Date;
+  enabled: boolean;
+}
+
+export type PluginCategory = 'authentication' | 'testing' | 'reporting' | 'integration' | 'utility';
+export type PluginType = 'builtin' | 'community' | 'custom';
+export type PluginStatus = 'active' | 'inactive' | 'error' | 'updating';
+
+export interface PluginConfig {
+  settings: Record<string, any>;
+  hooks: PluginHook[];
+  commands: PluginCommand[];
+}
+
+export interface PluginHook {
+  event: string;
+  handler: string;
+  priority: number;
+}
+
+export interface PluginCommand {
+  name: string;
+  description: string;
+  handler: string;
+  parameters: PluginParameter[];
+}
+
+export interface PluginParameter {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required: boolean;
+  default?: any;
+  description?: string;
+}
+
+export interface PluginPermission {
+  resource: string;
+  actions: string[];
+  description: string;
 }

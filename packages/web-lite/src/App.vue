@@ -1,85 +1,117 @@
 <template>
-  <div id="app">
-    <el-container class="app-container">
-      <el-header class="app-header">
-        <div class="header-content">
-          <h1 class="app-title">
-            <el-icon><Connection /></el-icon>
-            接口调试工具 Lite
-          </h1>
-          <div class="header-actions">
-            <el-button type="primary" @click="clearAll">清空</el-button>
-          </div>
-        </div>
-      </el-header>
-      
-      <el-main class="app-main">
-        <RequestPanel />
-        <ResponsePanel />
-      </el-main>
-    </el-container>
+  <div id="app" :class="{ 'dark': settingsStore.currentSettings?.theme === 'dark' }">
+    <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-import { Connection } from '@element-plus/icons-vue'
-import RequestPanel from './components/RequestPanel.vue'
-import ResponsePanel from './components/ResponsePanel.vue'
-import { useRequestStore } from './stores/request'
+import { onMounted } from 'vue'
+import { useSettingsStore } from './stores/settings'
 
-const requestStore = useRequestStore()
+const settingsStore = useSettingsStore()
 
-const clearAll = () => {
-  requestStore.clearRequest()
-  requestStore.clearResponse()
-}
+// 应用设置
+onMounted(() => {
+  settingsStore.applyCSSVariables()
+})
 </script>
 
 <style lang="scss">
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f7fa;
+}
+
 #app {
   height: 100vh;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
-}
-
-.app-container {
-  height: 100%;
-}
-
-.app-header {
-  background: #fff;
-  border-bottom: 1px solid #e4e7ed;
-  padding: 0 20px;
+  overflow: hidden;
   
-  .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 100%;
-  }
-  
-  .app-title {
-    margin: 0;
-    color: #409eff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 20px;
+  &.dark {
+    color: #e5eaf3;
+    background-color: #0d1117;
+    
+    body {
+      background-color: #0d1117;
+    }
   }
 }
 
-.app-main {
-  padding: 20px;
-  background: #f5f7fa;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  height: calc(100vh - 60px);
+// 全局滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-@media (max-width: 768px) {
-  .app-main {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+  
+  &:hover {
+    background: #a8a8a8;
+  }
+}
+
+.dark {
+  ::-webkit-scrollbar-track {
+    background: #2d333b;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #545d68;
+    
+    &:hover {
+      background: #636e7b;
+    }
+  }
+}
+
+// 动画效果
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(100%);
+}
+
+// 响应式工具类
+.hidden-mobile {
+  @media (max-width: 768px) {
+    display: none !important;
+  }
+}
+
+.hidden-desktop {
+  @media (min-width: 769px) {
+    display: none !important;
   }
 }
 </style>

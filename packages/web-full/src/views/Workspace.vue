@@ -99,7 +99,31 @@ import EnvironmentDialog from '../components/EnvironmentDialog.vue'
 import CollectionDialog from '../components/CollectionDialog.vue'
 import ImportDialog from '../components/ImportDialog.vue'
 import { useWorkspaceStore } from '../stores/workspace'
-import type { ApiCollection, Environment, RequestConfig } from '@api-debug-tool/shared/types'
+// 临时本地类型定义
+interface ApiCollection {
+  id: string
+  name: string
+  description?: string
+  requests: any[]
+  tags?: string[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface Environment {
+  id: string
+  name: string
+  variables: any[]
+  isActive: boolean
+}
+
+interface RequestConfig {
+  method: string
+  url: string
+  headers?: Record<string, string>
+  params?: Record<string, string>
+  body?: any
+}
 
 interface RequestTab {
   id: string

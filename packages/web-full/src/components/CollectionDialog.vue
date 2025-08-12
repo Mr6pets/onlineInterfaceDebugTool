@@ -81,7 +81,17 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import type { ApiCollection } from '@api-debug-tool/shared/types'
+// 临时本地类型定义
+interface ApiCollection {
+  id: string
+  name: string
+  description?: string
+  requests: any[]
+  folders?: any[]
+  tags?: string[]
+  createdAt: Date
+  updatedAt: Date
+}
 
 interface Props {
   modelValue: boolean

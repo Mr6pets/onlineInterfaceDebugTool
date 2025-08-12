@@ -10,7 +10,7 @@
         >
           <div class="tab-content">
             <el-icon v-if="!tab.saved" class="unsaved-indicator">
-              <CircleFilled />
+              <WarningFilled />
             </el-icon>
             <span class="tab-name">{{ tab.name }}</span>
             <el-button 
@@ -72,7 +72,7 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import {
-  CircleFilled,
+  WarningFilled,
   Close,
   Plus,
   MoreFilled
