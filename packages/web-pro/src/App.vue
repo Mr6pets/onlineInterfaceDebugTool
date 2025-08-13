@@ -9,7 +9,7 @@
     
     <div class="app-body">
       <AppSidebar 
-        :current-route="$route.name"
+        :current-route="$route.name as string"
         :collapsed="sidebarCollapsed"
         @toggle="sidebarCollapsed = !sidebarCollapsed"
       />
@@ -51,7 +51,7 @@ const currentTeam = computed(() => teamStore.currentTeam)
 
 onMounted(() => {
   userStore.loadUser()
-  teamStore.loadTeams()
+  teamStore.fetchTeamData()
   
   // 键盘快捷键
   document.addEventListener('keydown', handleKeydown)

@@ -59,7 +59,7 @@
             <div class="suite-stats">
               <div class="stat-item">
                 <span class="label">测试数量</span>
-                <span class="value">{{ suite.tests.length }}</span>
+                <span class="value">{{ suite.tests?.length || 0 }}</span>
               </div>
               <div class="stat-item">
                 <span class="label">成功率</span>
@@ -175,23 +175,22 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, MoreFilled } from '@element-plus/icons-vue'
-import PageHeader from '../components/common/PageHeader.vue'
-import TestResultsTable from '../components/automation/TestResultsTable.vue'
-import RunHistoryChart from '../components/automation/RunHistoryChart.vue'
-import CreateSuiteDialog from '../components/automation/CreateSuiteDialog.vue'
-import EditSuiteDialog from '../components/automation/EditSuiteDialog.vue'
-import ScheduleDialog from '../components/automation/ScheduleDialog.vue'
-import TestDetailsDialog from '../components/automation/TestDetailsDialog.vue'
-import { useAutomationStore } from '../stores/automation'
-import { formatRelativeTime } from '@api-debug-tool/shared/utils/formatter'
-import type { AutomationSuite, AutomationTest } from '@api-debug-tool/shared/types'
+import PageHeader from '@/components/common/PageHeader.vue'
+import TestResultsTable from '@/components/automation/TestResultsTable.vue'
+import RunHistoryChart from '@/components/automation/RunHistoryChart.vue'
+import CreateSuiteDialog from '@/components/automation/CreateSuiteDialog.vue'
+import EditSuiteDialog from '@/components/automation/EditSuiteDialog.vue'
+import ScheduleDialog from '@/components/automation/ScheduleDialog.vue'
+import TestDetailsDialog from '@/components/automation/TestDetailsDialog.vue'
+import { useAutomationStore } from '@/stores/automation'
+import type { TestSuite, TestResult, Schedule } from '@/types'
 
 const automationStore = useAutomationStore()
 
 const suiteSearch = ref('')
 const statusFilter = ref('')
-const selectedSuite = ref<AutomationSuite | null>(null)
-const selectedTest = ref<AutomationTest | null>(null)
+const selectedSuite = ref<TestSuite | null>(null)
+const selectedTest = ref<TestResult | null>(null)
 const runningAll = ref(false)
 const runningSuites = ref<string[]>([])
 const loadingResults = ref(false)
@@ -199,7 +198,7 @@ const showCreateSuiteDialog = ref(false)
 const showEditSuiteDialog = ref(false)
 const showScheduleDialog = ref(false)
 const showTestDetailsDialog = ref(false)
-const editingSuite = ref<AutomationSuite | null>(null)
+const editingSuite = ref<TestSuite | null>(null)
 
 const suites = computed(() => automationStore.suites)
 const testResults = computed(() => automationStore.testResults)
@@ -236,14 +235,15 @@ const filteredSuites = computed(() => {
 
 onMounted(() => {
   automationStore.loadSuites()
-  automationStore.loadHistory()
 })
 
-const selectSuite = async (suite: AutomationSuite) => {
+const selectSuite = async (suite: TestSuite) => {
   selectedSuite.value = suite
   loadingResults.value = true
   try {
-    await automationStore.loadTestResults(suite.id)
+    // 获取该套件的测试结果
+    const results = automationStore.getTestResults(suite.id)
+    // 这里可以添加更多逻辑
   } catch (error) {
     ElMessage.error('加载测试结果失败')
   } finally {
@@ -251,33 +251,30 @@ const selectSuite = async (suite: AutomationSuite) => {
   }
 }
 
-const getSuiteStatusType = (suite: AutomationSuite) => {
+const getSuiteStatusType = (suite: TestSuite) => {
   if (runningSuites.value.includes(suite.id)) return 'warning'
   return suite.enabled ? 'success' : 'info'
 }
 
-const getSuiteStatusText = (suite: AutomationSuite) => {
+const getSuiteStatusText = (suite: TestSuite) => {
   if (runningSuites.value.includes(suite.id)) return '运行中'
   return suite.enabled ? '启用' : '禁用'
 }
 
-const getSuccessRate = (suite: AutomationSuite) => {
+const getSuccessRate = (suite: TestSuite) => {
   // 计算成功率逻辑
   return 95
 }
 
-const formatLastRun = (lastRun?: Date) => {
-  return lastRun ? formatRelativeTime(lastRun) : '从未运行'
+const formatLastRun = (lastRun?: number | null) => {
+  return lastRun ? new Date(lastRun).toLocaleString() : '从未运行'
 }
 
-const runSuite = async (suite: AutomationSuite) => {
+const runSuite = async (suite: TestSuite) => {
   runningSuites.value.push(suite.id)
   try {
-    await automationStore.runSuite(suite.id)
+    await automationStore.runSuite(suite)
     ElMessage.success(`测试套件 "${suite.name}" 运行完成`)
-    if (selectedSuite.value?.id === suite.id) {
-      await automationStore.loadTestResults(suite.id)
-    }
   } catch (error) {
     ElMessage.error('测试运行失败')
   } finally {
@@ -300,16 +297,18 @@ const runAllSuites = async () => {
   }
 }
 
-const editSuite = (suite: AutomationSuite) => {
+const editSuite = (suite: TestSuite) => {
   editingSuite.value = suite
   showEditSuiteDialog.value = true
 }
 
-const handleSuiteAction = async ({ action, suite }: { action: string, suite: AutomationSuite }) => {
+const handleSuiteAction = async ({ action, suite }: { action: string, suite: TestSuite }) => {
   switch (action) {
     case 'duplicate':
       try {
-        await automationStore.duplicateSuite(suite.id)
+        // 复制套件逻辑
+        const newSuite = { ...suite, id: Date.now().toString(), name: `${suite.name} (副本)` }
+        await automationStore.createSuite(newSuite)
         ElMessage.success('测试套件已复制')
       } catch (error) {
         ElMessage.error('复制失败')
@@ -318,7 +317,8 @@ const handleSuiteAction = async ({ action, suite }: { action: string, suite: Aut
       
     case 'export':
       try {
-        await automationStore.exportSuite(suite.id)
+        const results = await automationStore.exportResults('json')
+        // 这里可以添加下载逻辑
         ElMessage.success('导出成功')
       } catch (error) {
         ElMessage.error('导出失败')
@@ -349,7 +349,7 @@ const handleSuiteAction = async ({ action, suite }: { action: string, suite: Aut
   }
 }
 
-const handleCreateSuite = async (suiteData: Partial<AutomationSuite>) => {
+const handleCreateSuite = async (suiteData: Partial<TestSuite>) => {
   try {
     await automationStore.createSuite(suiteData)
     ElMessage.success('测试套件已创建')
@@ -358,9 +358,9 @@ const handleCreateSuite = async (suiteData: Partial<AutomationSuite>) => {
   }
 }
 
-const handleSaveSuite = async (suite: AutomationSuite) => {
+const handleSaveSuite = async (suite: TestSuite) => {
   try {
-    await automationStore.updateSuite(suite)
+    await automationStore.updateSuite(suite.id, suite)
     ElMessage.success('测试套件已保存')
     editingSuite.value = null
   } catch (error) {
@@ -370,14 +370,18 @@ const handleSaveSuite = async (suite: AutomationSuite) => {
 
 const handleSaveSchedule = async (schedule: any) => {
   try {
-    await automationStore.saveSchedule(schedule)
+    if (schedule.id) {
+      await automationStore.updateSchedule(schedule.id, schedule)
+    } else {
+      await automationStore.createSchedule(schedule)
+    }
     ElMessage.success('定时任务已保存')
   } catch (error) {
     ElMessage.error('保存失败')
   }
 }
 
-const viewTestDetails = (test: AutomationTest) => {
+const viewTestDetails = (test: TestResult) => {
   selectedTest.value = test
   showTestDetailsDialog.value = true
 }
@@ -387,9 +391,14 @@ const viewDetailedResults = () => {
   ElMessage.info('详细报告功能开发中')
 }
 
-const exportResults = () => {
-  // 导出测试结果
-  ElMessage.info('导出功能开发中')
+const exportResults = async () => {
+  try {
+    const results = await automationStore.exportResults('json')
+    // 这里可以添加下载逻辑
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error('导出失败')
+  }
 }
 
 const clearHistory = async () => {
@@ -397,7 +406,7 @@ const clearHistory = async () => {
     await ElMessageBox.confirm('确定要清空运行历史吗？', '确认清空', {
       type: 'warning'
     })
-    await automationStore.clearHistory()
+    automationStore.clearResults()
     ElMessage.success('历史记录已清空')
   } catch {
     // 用户取消

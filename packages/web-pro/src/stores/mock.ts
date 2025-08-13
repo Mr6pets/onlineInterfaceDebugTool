@@ -2,9 +2,7 @@ import { defineStore } from 'pinia'
 import type { 
   MockRoute, 
   MockServerSettings, 
-  MockCondition,
-  MockResponse,
-  MockMiddleware
+  MockCondition
 } from '@/types'
 
 interface MockState {
@@ -22,7 +20,10 @@ export const useMockStore = defineStore('mock', {
       port: 3001,
       host: 'localhost',
       cors: true,
+      logging: true,
       logLevel: 'info',
+      maxRequestSize: 10485760, // 10MB
+      timeout: 30000, // 30s
       maxLogs: 1000
     },
     requestLogs: [],
@@ -106,7 +107,7 @@ export const useMockStore = defineStore('mock', {
         
         return this.serverInstance
       } catch (error) {
-        throw new Error(`启动服务器失败: ${error.message}`)
+        throw new Error(`启动服务器失败: ${error instanceof Error ? error.message : String(error)}`)
       }
     },
 
@@ -264,10 +265,10 @@ export const useMockStore = defineStore('mock', {
       
       switch (condition.type) {
         case 'query':
-          value = query[condition.key]
+          value = query[condition.field || '']
           break
         case 'header':
-          value = headers[condition.key.toLowerCase()]
+          value = headers[(condition.field || '').toLowerCase()]
           break
         case 'body':
           value = typeof body === 'string' ? body : JSON.stringify(body)

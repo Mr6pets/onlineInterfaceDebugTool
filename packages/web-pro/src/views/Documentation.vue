@@ -155,23 +155,23 @@
                   :on-success="handleLogoSuccess"
                   action="/api/upload"
                 >
-                  <img v-if="selectedDoc.logo" :src="selectedDoc.logo" class="logo" />
+                  <img v-if="selectedDoc.settings?.logo" :src="selectedDoc.settings.logo" class="logo" />
                   <el-icon v-else class="logo-uploader-icon"><Plus /></el-icon>
                 </el-upload>
               </el-form-item>
               
               <el-form-item label="联系信息">
                 <div class="contact-form">
-                  <el-input v-model="selectedDoc.contact.name" placeholder="联系人" />
-                  <el-input v-model="selectedDoc.contact.email" placeholder="邮箱" />
-                  <el-input v-model="selectedDoc.contact.url" placeholder="网站" />
+                  <el-input v-model="selectedDoc.settings.contact.name" placeholder="联系人" />
+                  <el-input v-model="selectedDoc.settings.contact.email" placeholder="邮箱" />
+                  <el-input v-model="selectedDoc.settings.contact.url" placeholder="网站" />
                 </div>
               </el-form-item>
               
               <el-form-item label="许可证">
                 <div class="license-form">
-                  <el-input v-model="selectedDoc.license.name" placeholder="许可证名称" />
-                  <el-input v-model="selectedDoc.license.url" placeholder="许可证URL" />
+                  <el-input v-model="selectedDoc.settings.license.name" placeholder="许可证名称" />
+                  <el-input v-model="selectedDoc.settings.license.url" placeholder="许可证URL" />
                 </div>
               </el-form-item>
             </el-form>
@@ -193,7 +193,7 @@
             
             <div class="apis-tree">
               <ApiDocTree
-                :data="selectedDoc.collections"
+                :data="selectedDoc.sections"
                 @add-group="addApiGroup"
                 @edit-group="editApiGroup"
                 @delete-group="deleteApiGroup"
@@ -213,8 +213,8 @@
                   v-for="theme in themes"
                   :key="theme.name"
                   class="theme-option"
-                  :class="{ active: selectedDoc.theme === theme.name }"
-                  @click="selectedDoc.theme = theme.name"
+                  :class="{ active: selectedDoc.theme?.name === theme.name }"
+                  @click="updateDocTheme(theme.name)"
                 >
                   <div class="theme-preview" :style="theme.preview"></div>
                   <span>{{ theme.label }}</span>
@@ -222,10 +222,10 @@
               </div>
             </div>
             
-            <div class="custom-css" v-if="selectedDoc.theme === 'custom'">
+            <div class="custom-css" v-if="selectedDoc.theme?.name === 'custom'">
               <h4>自定义CSS</h4>
               <MonacoEditor
-                v-model="selectedDoc.customCSS"
+                v-model="selectedDoc.theme.customCSS"
                 language="css"
                 :height="300"
                 :options="{ minimap: { enabled: false } }"
@@ -284,13 +284,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, MoreFilled, Plus } from '@element-plus/icons-vue'
 import PageHeader from '../components/common/PageHeader.vue'
 import ApiDocTree from '../components/documentation/ApiDocTree.vue'
-import MonacoEditor from '../components/common/MonacoEditor.vue'
-import CreateDocDialog from '../components/documentation/CreateDocDialog.vue'
-import DocSettingsDialog from '../components/documentation/DocSettingsDialog.vue'
-import ApiEditDialog from '../components/documentation/ApiEditDialog.vue'
+import ApiEditor from '../components/documentation/ApiEditor.vue'
+import ThemeCustomizer from '../components/documentation/ThemeCustomizer.vue'
+import DocPreview from '../components/documentation/DocPreview.vue'
+import CodeEditor from '../components/documentation/CodeEditor.vue'
 import { useDocumentationStore } from '../stores/documentation'
-import { formatDate } from '@api-debug-tool/shared/utils/formatter'
-import type { ApiDocumentation } from '@api-debug-tool/shared/types'
+import type { ApiDocumentation } from '@/types'
 
 const documentationStore = useDocumentationStore()
 
@@ -304,7 +303,7 @@ const showApiDialog = ref(false)
 const editingApi = ref(null)
 const previewFrame = ref()
 
-const docs = computed(() => documentationStore.docs)
+const docs = computed(() => documentationStore.documentations)
 const docSettings = computed(() => documentationStore.settings)
 const previewUrl = computed(() => 
   selectedDoc.value ? `/api/docs/${selectedDoc.value.id}/preview` : ''
@@ -348,7 +347,7 @@ const themes = [
 ]
 
 onMounted(() => {
-  documentationStore.loadDocs()
+  documentationStore.fetchDocumentations()
 })
 
 const selectDoc = (doc: ApiDocumentation) => {
@@ -367,7 +366,7 @@ const previewDoc = (doc: ApiDocumentation) => {
 
 const publishDoc = async (doc: ApiDocumentation) => {
   try {
-    await documentationStore.publishDoc(doc.id)
+    await documentationStore.publishDocumentation(doc.id)
     ElMessage.success('文档已发布')
   } catch (error) {
     ElMessage.error('发布失败')
@@ -378,7 +377,7 @@ const saveDoc = async () => {
   if (!selectedDoc.value) return
   
   try {
-    await documentationStore.saveDoc(selectedDoc.value)
+    await documentationStore.updateDocumentation(selectedDoc.value.id, selectedDoc.value)
     ElMessage.success('文档已保存')
   } catch (error) {
     ElMessage.error('保存失败')
@@ -388,17 +387,17 @@ const saveDoc = async () => {
 const handleDocAction = async ({ action, doc }: { action: string, doc: ApiDocumentation }) => {
   switch (action) {
     case 'duplicate':
-      await documentationStore.duplicateDoc(doc.id)
+      await documentationStore.duplicateDocumentation(doc.id)
       ElMessage.success('文档已复制')
       break
       
     case 'export':
-      await documentationStore.exportDoc(doc.id)
+      await documentationStore.exportDocumentation(doc.id)
       ElMessage.success('文档已导出')
       break
       
     case 'share':
-      const shareUrl = await documentationStore.getShareUrl(doc.id)
+      const shareUrl = `${window.location.origin}/docs/${doc.id}`
       await navigator.clipboard.writeText(shareUrl)
       ElMessage.success('分享链接已复制')
       break
@@ -408,7 +407,7 @@ const handleDocAction = async ({ action, doc }: { action: string, doc: ApiDocume
         await ElMessageBox.confirm('确定要删除这个文档吗？', '确认删除', {
           type: 'warning'
         })
-        await documentationStore.deleteDoc(doc.id)
+        await documentationStore.deleteDocumentation(doc.id)
         ElMessage.success('文档已删除')
         if (selectedDoc.value?.id === doc.id) {
           selectedDoc.value = null
@@ -422,7 +421,7 @@ const handleDocAction = async ({ action, doc }: { action: string, doc: ApiDocume
 
 const handleCreateDoc = async (docData: any) => {
   try {
-    const newDoc = await documentationStore.createDoc(docData)
+    const newDoc = await documentationStore.createDocumentation(docData)
     selectedDoc.value = newDoc
     ElMessage.success('文档已创建')
   } catch (error) {
@@ -440,9 +439,23 @@ const handleSaveSettings = async (settings: any) => {
 }
 
 const handleLogoSuccess = (response: any) => {
-  if (selectedDoc.value) {
-    selectedDoc.value.logo = response.url
+  if (selectedDoc.value && selectedDoc.value.settings) {
+    selectedDoc.value.settings.logo = response.url
   }
+}
+
+const updateDocTheme = (themeName: string) => {
+  if (selectedDoc.value) {
+    if (!selectedDoc.value.theme) {
+      selectedDoc.value.theme = { name: themeName }
+    } else {
+      selectedDoc.value.theme.name = themeName
+    }
+  }
+}
+
+const formatDate = (date: string | Date) => {
+  return new Date(date).toLocaleDateString()
 }
 
 const addApiGroup = () => {

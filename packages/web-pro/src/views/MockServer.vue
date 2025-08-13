@@ -245,39 +245,37 @@
               </div>
             </el-form-item>
 
+            <el-form-item label="响应体类型">
+              <el-select v-model="routeForm.response.bodyType" style="width: 200px">
+                <el-option label="JSON" value="json" />
+                <el-option label="文本" value="text" />
+                <el-option label="HTML" value="html" />
+                <el-option label="XML" value="xml" />
+              </el-select>
+            </el-form-item>
+            
             <el-form-item label="响应体">
-              <el-tabs v-model="responseBodyType">
-                <el-tab-pane label="JSON" name="json">
-                  <el-input 
-                    v-model="routeForm.response.body" 
-                    type="textarea" 
-                    :rows="8"
-                    placeholder='{ "message": "Hello World" }'
-                  />
-                </el-tab-pane>
-                <el-tab-pane label="文本" name="text">
-                  <el-input 
-                    v-model="routeForm.response.body" 
-                    type="textarea" 
-                    :rows="8"
-                    placeholder="响应文本内容"
-                  />
-                </el-tab-pane>
-                <el-tab-pane label="文件" name="file">
-                  <el-upload
-                    class="upload-demo"
-                    drag
-                    action="#"
-                    :auto-upload="false"
-                    :on-change="handleFileChange"
-                  >
-                    <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-                    <div class="el-upload__text">
-                      拖拽文件到此处或<em>点击上传</em>
-                    </div>
-                  </el-upload>
-                </el-tab-pane>
-              </el-tabs>
+              <el-input 
+                v-model="routeForm.response.body" 
+                type="textarea" 
+                :rows="8"
+                :placeholder='routeForm.response.bodyType === "json" ? "{ \"message\": \"Hello World\" }" : "响应内容"'
+              />
+            </el-form-item>
+            
+            <el-form-item label="从文件导入">
+              <el-upload
+                class="upload-demo"
+                drag
+                action="#"
+                :auto-upload="false"
+                :on-change="handleFileChange"
+              >
+                <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+                <div class="el-upload__text">
+                  拖拽文件到此处或<em>点击上传</em>
+                </div>
+              </el-upload>
             </el-form-item>
           </el-tab-pane>
 
@@ -294,7 +292,7 @@
                     <el-option label="Header" value="header" />
                     <el-option label="Body" value="body" />
                   </el-select>
-                  <el-input v-model="condition.key" placeholder="键" style="width: 25%; margin: 0 5px" />
+                  <el-input v-model="condition.field" placeholder="字段" style="width: 25%; margin: 0 5px" />
                   <el-select v-model="condition.operator" style="width: 20%; margin-right: 5px">
                     <el-option label="等于" value="equals" />
                     <el-option label="包含" value="contains" />
@@ -312,13 +310,8 @@
               </div>
             </el-form-item>
 
-            <el-form-item label="中间件">
-              <el-checkbox-group v-model="routeForm.middleware">
-                <el-checkbox label="cors">CORS</el-checkbox>
-                <el-checkbox label="auth">身份验证</el-checkbox>
-                <el-checkbox label="rate-limit">限流</el-checkbox>
-                <el-checkbox label="logging">日志记录</el-checkbox>
-              </el-checkbox-group>
+            <el-form-item label="启用状态">
+              <el-switch v-model="routeForm.enabled" />
             </el-form-item>
           </el-tab-pane>
         </el-tabs>
@@ -435,7 +428,6 @@ const showLogDetail = ref(false)
 const editingRoute = ref<MockRoute | null>(null)
 const selectedLog = ref(null)
 const activeTab = ref('response')
-const responseBodyType = ref('json')
 const saving = ref(false)
 
 // Form data
@@ -447,10 +439,10 @@ const routeForm = ref<Partial<MockRoute>>({
   response: {
     statusCode: 200,
     headers: [],
-    body: ''
+    body: '',
+    bodyType: 'json'
   },
   conditions: [],
-  middleware: [],
   delay: 0
 })
 
@@ -458,7 +450,10 @@ const mockSettings = ref<MockServerSettings>({
   port: 3001,
   host: 'localhost',
   cors: true,
+  logging: true,
   logLevel: 'info',
+  maxRequestSize: 1024 * 1024,
+  timeout: 30000,
   maxLogs: 1000
 })
 
@@ -489,12 +484,12 @@ const filteredRoutes = computed(() => {
   return routes
 })
 
+const requestLogs = computed(() => mockStore.requestLogs.slice(-100))
+
 const stats = computed(() => ({
-  totalRequests: mockStore.requestLogs.length,
+  totalRequests: requestLogs.value.length,
   activeRoutes: mockStore.routes.filter(r => r.enabled).length
 }))
-
-const requestLogs = computed(() => mockStore.requestLogs.slice(-100))
 
 // Methods
 const toggleServer = async () => {
@@ -599,39 +594,51 @@ const resetRouteForm = () => {
     response: {
       statusCode: 200,
       headers: [],
-      body: ''
+      body: '',
+      bodyType: 'json'
     },
     conditions: [],
-    middleware: [],
     delay: 0
   }
 }
 
 const addHeader = () => {
+  if (!routeForm.value.response?.headers) {
+    routeForm.value.response = { ...routeForm.value.response, headers: [] }
+  }
   routeForm.value.response.headers.push({ key: '', value: '' })
 }
 
 const removeHeader = (index: number) => {
-  routeForm.value.response.headers.splice(index, 1)
+  if (routeForm.value.response?.headers) {
+    routeForm.value.response.headers.splice(index, 1)
+  }
 }
 
 const addCondition = () => {
+  if (!routeForm.value.conditions) {
+    routeForm.value.conditions = []
+  }
   routeForm.value.conditions.push({
     type: 'query',
-    key: '',
+    field: '',
     operator: 'equals',
     value: ''
   })
 }
 
 const removeCondition = (index: number) => {
-  routeForm.value.conditions.splice(index, 1)
+  if (routeForm.value.conditions) {
+    routeForm.value.conditions.splice(index, 1)
+  }
 }
 
 const handleFileChange = (file: any) => {
   const reader = new FileReader()
   reader.onload = (e) => {
-    routeForm.value.response.body = e.target?.result as string
+    if (routeForm.value.response) {
+      routeForm.value.response.body = e.target?.result as string
+    }
   }
   reader.readAsText(file.raw)
 }

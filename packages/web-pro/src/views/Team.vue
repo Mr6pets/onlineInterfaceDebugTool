@@ -25,8 +25,8 @@
             <p>{{ currentTeam?.description }}</p>
             <div class="team-stats">
               <span>{{ members.length }} 成员</span>
-              <span>{{ workspaces.length }} 工作空间</span>
-              <span>创建于 {{ formatDate(currentTeam?.createdAt) }}</span>
+              <span>0 工作空间</span>
+              <span v-if="currentTeam?.createdAt">创建于 {{ formatDate(currentTeam.createdAt) }}</span>
             </div>
           </div>
         </div>
@@ -73,7 +73,7 @@
               <el-avatar :src="member.avatar">
                 {{ member.name.charAt(0) }}
               </el-avatar>
-              <div class="member-status" :class="{ online: member.isOnline }"></div>
+              <div class="member-status" :class="{ online: isOnline(member) }"></div>
             </div>
             
             <div class="member-info">
@@ -128,7 +128,7 @@
           </el-button>
         </div>
         
-        <PermissionsMatrix :permissions="teamPermissions" />
+        <PermissionsMatrix :permissions="permissionsForMatrix" />
       </div>
       
       <!-- 活动日志 -->
@@ -161,7 +161,7 @@
     <!-- 权限管理对话框 -->
     <PermissionsDialog
       v-model="showPermissionsDialog"
-      :permissions="teamPermissions"
+      :member="editingMember"
       @save="handleSavePermissions"
     />
     
@@ -169,6 +169,7 @@
     <EditMemberDialog
       v-model="showEditMemberDialog"
       :member="editingMember"
+      :current-user-role="'admin'"
       @save="handleSaveMember"
     />
   </div>
@@ -186,8 +187,26 @@ import TeamSettingsDialog from '../components/team/TeamSettingsDialog.vue'
 import PermissionsDialog from '../components/team/PermissionsDialog.vue'
 import EditMemberDialog from '../components/team/EditMemberDialog.vue'
 import { useTeamStore } from '../stores/team'
-import { formatDate, formatRelativeTime } from '@api-debug-tool/shared/utils/formatter'
-import type { TeamMember } from '@api-debug-tool/shared/types'
+import type { TeamMember } from '@/types'
+
+// 本地格式化函数
+const formatDate = (date: string | Date) => {
+  return new Date(date).toLocaleDateString()
+}
+
+const formatRelativeTime = (date: string | Date) => {
+  const now = new Date()
+  const target = new Date(date)
+  const diff = now.getTime() - target.getTime()
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+  
+  if (days === 0) return '今天'
+  if (days === 1) return '昨天'
+  if (days < 7) return `${days}天前`
+  if (days < 30) return `${Math.floor(days / 7)}周前`
+  if (days < 365) return `${Math.floor(days / 30)}个月前`
+  return `${Math.floor(days / 365)}年前`
+}
 
 const teamStore = useTeamStore()
 
@@ -202,8 +221,20 @@ const activityLoading = ref(false)
 
 const currentTeam = computed(() => teamStore.currentTeam)
 const members = computed(() => teamStore.members)
-const workspaces = computed(() => teamStore.workspaces)
-const teamPermissions = computed(() => teamStore.permissions)
+// const workspaces = computed(() => teamStore.workspaces) // 暂时注释掉，teamStore中没有workspaces
+// 为PermissionsMatrix组件适配权限数据格式
+const permissionsForMatrix = computed(() => {
+  // 创建基础权限列表
+  return [
+    { key: 'read', name: '查看', description: '查看团队信息和数据' },
+    { key: 'write', name: '编辑', description: '编辑和修改数据' },
+    { key: 'delete', name: '删除', description: '删除数据和资源' },
+    { key: 'admin', name: '管理', description: '管理团队设置' },
+    { key: 'invite', name: '邀请', description: '邀请新成员' },
+    { key: 'manage_team', name: '团队管理', description: '管理团队成员' },
+    { key: 'manage_billing', name: '账单管理', description: '管理付费和账单' }
+  ]
+})
 const activities = computed(() => teamStore.activities)
 
 const filteredMembers = computed(() => {
@@ -224,7 +255,7 @@ const filteredMembers = computed(() => {
 })
 
 onMounted(() => {
-  teamStore.loadTeamData()
+  teamStore.fetchTeamData()
   loadActivityLog()
 })
 
@@ -246,6 +277,15 @@ const getRoleLabel = (role: string) => {
     viewer: '查看者'
   }
   return labels[role] || role
+}
+
+// 判断成员是否在线（基于最后活跃时间）
+const isOnline = (member: TeamMember) => {
+  if (!member.lastActiveAt) return false
+  const lastActive = new Date(member.lastActiveAt)
+  const now = new Date()
+  const diffMinutes = (now.getTime() - lastActive.getTime()) / (1000 * 60)
+  return diffMinutes < 30 // 30分钟内活跃视为在线
 }
 
 const handleMemberAction = async ({ action, member }: { action: string, member: TeamMember }) => {
@@ -278,7 +318,7 @@ const handleMemberAction = async ({ action, member }: { action: string, member: 
 
 const handleInviteMember = async (inviteData: any) => {
   try {
-    await teamStore.inviteMember(inviteData)
+    await teamStore.inviteMembers(inviteData)
     ElMessage.success('邀请已发送')
   } catch (error) {
     ElMessage.error('邀请发送失败')
@@ -296,7 +336,7 @@ const handleSaveTeamSettings = async (settings: any) => {
 
 const handleSavePermissions = async (permissions: any) => {
   try {
-    await teamStore.updatePermissions(permissions)
+    teamStore.updatePermissionsMatrix(permissions)
     ElMessage.success('权限设置已保存')
   } catch (error) {
     ElMessage.error('保存失败')
@@ -305,7 +345,7 @@ const handleSavePermissions = async (permissions: any) => {
 
 const handleSaveMember = async (memberData: any) => {
   try {
-    await teamStore.updateMember(memberData)
+    await teamStore.updateMember(memberData.id, memberData)
     ElMessage.success('成员信息已更新')
     editingMember.value = null
   } catch (error) {

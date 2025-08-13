@@ -25,14 +25,14 @@
       <div class="overview-cards">
         <MetricCard
           title="平均响应时间"
-          :value="summary.avgDuration"
+          :value="summary.avgResponseTime"
           unit="ms"
           :trend="responseTrend"
           color="#409eff"
         />
         <MetricCard
           title="成功率"
-          :value="summary.successRate"
+          :value="Math.round((summary.successfulRequests / summary.totalRequests) * 100)"
           unit="%"
           :trend="successTrend"
           color="#67c23a"
@@ -116,7 +116,7 @@ import PerformanceTable from '../components/performance/PerformanceTable.vue'
 import RequestDetailDialog from '../components/performance/RequestDetailDialog.vue'
 import PerformanceSettingsDialog from '../components/performance/PerformanceSettingsDialog.vue'
 import { usePerformanceStore } from '../stores/performance'
-import type { PerformanceMetrics } from '@api-debug-tool/shared/types'
+import type { ExtendedPerformanceMetrics } from '../types'
 
 const performanceStore = usePerformanceStore()
 
@@ -124,7 +124,7 @@ const timeRange = ref<[Date, Date]>([new Date(Date.now() - 24 * 60 * 60 * 1000),
 const loading = ref(false)
 const showDetailDialog = ref(false)
 const showSettings = ref(false)
-const selectedRequest = ref<PerformanceMetrics | null>(null)
+const selectedRequest = ref<ExtendedPerformanceMetrics | null>(null)
 
 const summary = computed(() => performanceStore.summary)
 const metricsData = computed(() => performanceStore.metrics)
@@ -137,19 +137,19 @@ const performanceSettings = computed(() => performanceStore.settings)
 // 趋势计算
 const responseTrend = computed(() => {
   // 计算响应时间趋势
-  return { value: 5.2, direction: 'up' }
+  return { value: 5.2, direction: 'up' as const }
 })
 
 const successTrend = computed(() => {
-  return { value: 2.1, direction: 'up' }
+  return { value: 2.1, direction: 'up' as const }
 })
 
 const requestTrend = computed(() => {
-  return { value: 12.5, direction: 'up' }
+  return { value: 12.5, direction: 'up' as const }
 })
 
 const errorTrend = computed(() => {
-  return { value: 1.3, direction: 'down' }
+  return { value: 1.3, direction: 'down' as const }
 })
 
 onMounted(() => {
@@ -172,7 +172,7 @@ const loadMetrics = async () => {
   }
 }
 
-const showRequestDetail = (request: PerformanceMetrics) => {
+const showRequestDetail = (request: ExtendedPerformanceMetrics) => {
   selectedRequest.value = request
   showDetailDialog.value = true
 }
