@@ -252,7 +252,7 @@
               >
                 <el-icon><FolderAdd /></el-icon>
               </el-button>
-              <el-dropdown @command="(command) => handleItemAction(command, item)" trigger="click">
+              <el-dropdown @command="(command: string) => handleItemAction(command, item)" trigger="click">
                 <el-button type="text" size="small">
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>
@@ -899,7 +899,7 @@ const viewDetails = (item: HistoryRecord) => {
   showDetailsDialog.value = true
 }
 
-const resendRequest = (item: HistoryRecord) => {
+const resendRequest = (_item: HistoryRecord) => {
   ElMessage.success('请求已重新发送')
   // 这里应该调用API发送请求的逻辑
 }

@@ -143,7 +143,7 @@
                     <div class="file-details">
                       <el-icon><Document /></el-icon>
                       <span class="file-name">{{ importFile.name }}</span>
-                      <span class="file-size">{{ formatSize(importFile.size) }}</span>
+                      <span class="file-size">{{ formatSize(importFile.size || 0) }}</span>
                     </div>
                     <el-button type="text" @click="removeFile">
                       <el-icon><Close /></el-icon>
@@ -541,7 +541,7 @@
           <div class="file-info">
             <el-icon><Document /></el-icon>
             <span class="file-name">{{ dialogImportFile.name }}</span>
-            <span class="file-size">{{ formatSize(dialogImportFile.size) }}</span>
+            <span class="file-size">{{ formatSize(dialogImportFile.size || 0) }}</span>
           </div>
           
           <div class="import-options">

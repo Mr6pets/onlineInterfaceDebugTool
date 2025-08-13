@@ -263,7 +263,6 @@ import {
   Delete as Trash2,
   ArrowRight as ChevronRight
 } from '@element-plus/icons-vue'
-import { useWorkspaceStore } from '@/stores/workspace'
 import { useCollectionStore } from '@/stores/collection'
 import { useEnvironmentStore } from '@/stores/environment'
 

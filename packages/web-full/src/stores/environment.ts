@@ -1019,6 +1019,7 @@ export const useEnvironmentStore = defineStore('environment', () => {
     importEnvironments,
     exportEnvironments,
     resolveVariables,
-    getVariableValue
+    getVariableValue,
+    saveGlobalVariables
   }
 })

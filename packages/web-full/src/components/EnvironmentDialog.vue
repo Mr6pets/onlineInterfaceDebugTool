@@ -90,14 +90,14 @@
             </div>
             
             <div
-              v-for="(value, key) in selectedEnvironment.variables"
+              v-for="(_value, key) in selectedEnvironment?.variables || {}"
               :key="key"
               class="table-row"
             >
               <div class="col-key">
                 <el-input
                   :model-value="key"
-                  @input="updateVariableKey(key, $event)"
+                  @input="(newValue: string) => updateVariableKey(key, newValue)"
                   placeholder="变量名"
                   size="small"
                 />

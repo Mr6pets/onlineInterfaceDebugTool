@@ -22,7 +22,7 @@
           <Loading v-else class="btn-icon" />
           {{ isRunning ? '运行中' : '运行测试' }}
         </el-button>
-        <el-dropdown @command="handleAction">
+        <el-dropdown @command="(command: string) => handleAction(command)">
           <el-button>
             <MoreHorizontal class="btn-icon" />
           </el-button>
@@ -353,20 +353,20 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   ArrowLeft,
-  Play,
+  VideoPlay as Play,
   Loading,
-  MoreHorizontal,
+  MoreFilled as MoreHorizontal,
   Edit,
-  Copy,
+  CopyDocument as Copy,
   Download,
-  Trash2,
-  FileText,
-  CheckCircle,
-  XCircle,
+  Delete as Trash2,
+  Document as FileText,
+  SuccessFilled as CheckCircle,
+  CircleCloseFilled as XCircle,
   Clock,
   Plus,
   Upload
-} from 'lucide-vue-next'
+} from '@element-plus/icons-vue'
 import { useEnvironmentStore } from '@/stores/environment'
 
 const route = useRoute()
@@ -376,10 +376,10 @@ const environmentStore = useEnvironmentStore()
 // 响应式数据
 const activeTab = ref('requests')
 const isRunning = ref(false)
-const selectedRequests = ref([])
+const selectedRequests = ref<any[]>([])
 
 // 测试套件数据
-const testSuite = ref({
+const testSuite = ref<any>({
   id: route.params.id,
   name: '用户API测试套件',
   description: '测试用户相关的所有API接口',
@@ -387,7 +387,7 @@ const testSuite = ref({
 })
 
 // 测试请求数据
-const testRequests = ref([
+const testRequests = ref<any[]>([
   {
     id: '1',
     name: '获取用户列表',
@@ -567,7 +567,7 @@ const importRequests = () => {
   ElMessage.info('导入请求功能开发中')
 }
 
-const editRequest = (request: any) => {
+const editRequest = (_request: any) => {
   // 编辑请求逻辑
   ElMessage.info('编辑请求功能开发中')
 }

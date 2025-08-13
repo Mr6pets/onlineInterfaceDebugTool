@@ -76,7 +76,7 @@
               <div class="group-header">
                 <el-icon><FolderOpened /></el-icon>
                 <span>{{ group.name }}</span>
-                <el-dropdown @command="(command) => handleGroupAction(command, group)" trigger="click">
+                <el-dropdown @command="(command: string) => handleGroupAction(command, group)" trigger="click">
                   <el-button type="text" size="small" @click.stop>
                     <el-icon><MoreFilled /></el-icon>
                   </el-button>
@@ -99,12 +99,12 @@
                 <div class="env-info">
                   <div class="env-name">{{ env.name }}</div>
                   <div class="env-meta">
-                    {{ env.variables?.length || 0 }} 个变量
+                    {{ Object.keys(env.variables || {}).length }} 个变量
                     <el-tag v-if="env.id === currentEnvironmentId" type="success" size="small">当前</el-tag>
                   </div>
                 </div>
                 <div class="env-actions">
-                  <el-dropdown @command="(command) => handleEnvironmentAction(command, env)" trigger="click">
+                  <el-dropdown @command="(command: string) => handleEnvironmentAction(command, env)" trigger="click">
                     <el-button type="text" size="small" @click.stop>
                       <el-icon><MoreFilled /></el-icon>
                     </el-button>
@@ -210,7 +210,7 @@
                       v-model="variable.key"
                       placeholder="变量名"
                       size="small"
-                      @input="markAsModified"
+                      @input="(newKey: string) => updateVariableInEnvironment(variable.key, newKey, variable.value)"
                       :disabled="!variable.enabled"
                     />
                   </div>
@@ -219,7 +219,7 @@
                       v-model="variable.value"
                       placeholder="当前值"
                       size="small"
-                      @input="markAsModified"
+                      @input="(newValue: string) => updateVariableInEnvironment(variable.key, variable.key, newValue)"
                       :disabled="!variable.enabled"
                       :type="variable.secret ? 'password' : 'text'"
                       show-password
@@ -515,16 +515,11 @@ import {
   DocumentCopy
 } from '@element-plus/icons-vue'
 import { useEnvironmentStore } from '@/stores/environment'
-// 临时本地类型定义
-interface Environment {
-  id: string
-  name: string
+import type { Environment as BaseEnvironment } from '@shared/types'
+
+// 扩展Environment类型以支持description属性
+interface Environment extends BaseEnvironment {
   description?: string
-  variables: EnvironmentVariable[]
-  workspaceId: string
-  createdAt: Date
-  updatedAt: Date
-  createdBy: string
 }
 
 interface EnvironmentVariable {
@@ -585,7 +580,9 @@ const createEnvironmentForm = ref({
   name: '',
   description: '',
   groupId: 'default',
-  copyFromId: ''
+  copyFromId: '',
+  variables: {} as Record<string, string>,
+  isActive: false
 })
 
 const editEnvironmentForm = ref({
@@ -617,42 +614,36 @@ const environments = ref<Environment[]>([
   {
     id: 'dev',
     name: '开发环境',
-    description: '本地开发环境配置',
-    variables: [
-      { key: 'baseUrl', value: 'https://dev-api.example.com', initialValue: 'https://dev-api.example.com', enabled: true, secret: false },
-      { key: 'apiKey', value: 'dev-key-123', initialValue: 'dev-key-123', enabled: true, secret: true },
-      { key: 'timeout', value: '5000', initialValue: '5000', enabled: true, secret: false }
-    ],
-    workspaceId: '1',
+    variables: {
+      baseUrl: 'https://dev-api.example.com',
+      apiKey: 'dev-key-123',
+      timeout: '5000'
+    },
+    isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   },
   {
     id: 'test',
     name: '测试环境',
-    description: '测试环境配置',
-    variables: [
-      { key: 'baseUrl', value: 'https://test-api.example.com', initialValue: 'https://test-api.example.com', enabled: true, secret: false },
-      { key: 'apiKey', value: 'test-key-456', initialValue: 'test-key-456', enabled: true, secret: true }
-    ],
-    workspaceId: '1',
+    variables: {
+      baseUrl: 'https://test-api.example.com',
+      apiKey: 'test-key-456'
+    },
+    isActive: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   },
   {
     id: 'prod',
     name: '生产环境',
-    description: '生产环境配置',
-    variables: [
-      { key: 'baseUrl', value: 'https://api.example.com', initialValue: 'https://api.example.com', enabled: true, secret: false },
-      { key: 'apiKey', value: 'prod-key-789', initialValue: 'prod-key-789', enabled: true, secret: true }
-    ],
-    workspaceId: '1',
+    variables: {
+      baseUrl: 'https://api.example.com',
+      apiKey: 'prod-key-789'
+    },
+    isActive: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   }
 ])
 
@@ -689,9 +680,22 @@ const allEnvironments = computed(() => {
 const filteredVariables = computed(() => {
   if (!selectedEnvironment.value) return []
   
-  const variables = selectedEnvironment.value.id === 'global' 
-    ? globalVariables.value 
-    : selectedEnvironment.value.variables || []
+  let variables: EnvironmentVariable[] = []
+  
+  if (selectedEnvironment.value.id === 'global') {
+    variables = globalVariables.value
+  } else {
+    // 将 Record<string, string> 转换为 EnvironmentVariable[]
+    const envVars = selectedEnvironment.value.variables || {}
+    variables = Object.entries(envVars).map(([key, value]) => ({
+      key,
+      value: String(value),
+      initialValue: String(value),
+      enabled: true,
+      secret: false,
+      description: ''
+    }))
+  }
   
   if (!variableSearchQuery.value) return variables
   
@@ -724,7 +728,7 @@ const selectEnvironment = (env: any) => {
 
 const setCurrentEnvironment = async (environmentId: string) => {
   try {
-    await environmentStore.setCurrentEnvironment(environmentId)
+    await environmentStore.switchEnvironment(environmentId)
     currentEnvironmentId.value = environmentId
     ElMessage.success('当前环境设置成功')
   } catch (error) {
@@ -805,7 +809,7 @@ const duplicateEnvironment = async (env: Environment) => {
       ...env,
       id: `${env.id}_copy_${Date.now()}`,
       name: `${env.name} 副本`,
-      variables: env.variables?.map(v => ({ ...v })) || []
+      variables: { ...(env.variables || {}) }
     }
     
     environments.value.push(newEnv)
@@ -819,7 +823,7 @@ const exportEnvironment = async (env: Environment) => {
   try {
     const data = {
       name: env.name,
-      description: env.description,
+      description: env.description || '',
       variables: env.variables
     }
     
@@ -853,9 +857,11 @@ const addVariable = () => {
     globalVariables.value.push(newVariable)
   } else {
     if (!selectedEnvironment.value.variables) {
-      selectedEnvironment.value.variables = []
+      selectedEnvironment.value.variables = {}
     }
-    selectedEnvironment.value.variables.push(newVariable)
+    // 为新变量生成一个临时key
+    const tempKey = `new_variable_${Date.now()}`
+    selectedEnvironment.value.variables[tempKey] = ''
   }
   
   markAsModified()
@@ -865,23 +871,33 @@ const removeVariable = (index: number) => {
   if (selectedEnvironment.value.id === 'global') {
     globalVariables.value.splice(index, 1)
   } else {
-    selectedEnvironment.value.variables.splice(index, 1)
+    const envVars = selectedEnvironment.value.variables || {}
+    const keys = Object.keys(envVars)
+    if (keys[index]) {
+      delete selectedEnvironment.value.variables[keys[index]]
+    }
   }
   markAsModified()
 }
 
 const duplicateVariable = (index: number) => {
-  const variables = selectedEnvironment.value.id === 'global' 
-    ? globalVariables.value 
-    : selectedEnvironment.value.variables
-  
-  const original = variables[index]
-  const duplicate = {
-    ...original,
-    key: `${original.key}_copy`
+  if (selectedEnvironment.value.id === 'global') {
+    const original = globalVariables.value[index]
+    const duplicate = {
+      ...original,
+      key: `${original.key}_copy`
+    }
+    globalVariables.value.splice(index + 1, 0, duplicate)
+  } else {
+    const envVars = selectedEnvironment.value.variables || {}
+    const keys = Object.keys(envVars)
+    if (keys[index]) {
+      const originalKey = keys[index]
+      const originalValue = envVars[originalKey]
+      const duplicateKey = `${originalKey}_copy`
+      selectedEnvironment.value.variables[duplicateKey] = originalValue
+    }
   }
-  
-  variables.splice(index + 1, 0, duplicate)
   markAsModified()
 }
 
@@ -940,13 +956,31 @@ const markAsModified = () => {
   hasChanges.value = true
 }
 
+// 更新变量值到Environment的variables Record中
+const updateVariableInEnvironment = (oldKey: string, newKey: string, newValue: string) => {
+  if (!selectedEnvironment.value || selectedEnvironment.value.id === 'global') return
+  
+  if (!selectedEnvironment.value.variables) {
+    selectedEnvironment.value.variables = {}
+  }
+  
+  // 如果key发生变化，删除旧的key
+  if (oldKey !== newKey && oldKey in selectedEnvironment.value.variables) {
+    delete selectedEnvironment.value.variables[oldKey]
+  }
+  
+  // 设置新的key和value
+  selectedEnvironment.value.variables[newKey] = newValue
+  markAsModified()
+}
+
 const saveChanges = async () => {
   if (!selectedEnvironment.value) return
   
   saving.value = true
   try {
     if (selectedEnvironment.value.id === 'global') {
-      await environmentStore.saveGlobalVariables(globalVariables.value)
+      await environmentStore.saveGlobalVariables()
     } else {
       await environmentStore.updateEnvironment(selectedEnvironment.value.id, selectedEnvironment.value)
     }
@@ -973,7 +1007,7 @@ const handleCreateEnvironment = async () => {
     await createEnvironmentFormRef.value.validate()
     creating.value = true
     
-    const newEnvironment = await environmentStore.createEnvironment(createEnvironmentForm.value)
+    await environmentStore.createEnvironment(createEnvironmentForm.value)
     
     showCreateEnvironmentDialog.value = false
     resetCreateEnvironmentForm()
@@ -1059,7 +1093,9 @@ const resetCreateEnvironmentForm = () => {
     name: '',
     description: '',
     groupId: 'default',
-    copyFromId: ''
+    copyFromId: '',
+    variables: {},
+    isActive: false
   }
   createEnvironmentFormRef.value?.resetFields()
 }

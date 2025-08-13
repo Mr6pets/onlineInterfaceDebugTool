@@ -267,7 +267,7 @@ import {
   Refresh, 
   Close 
 } from '@element-plus/icons-vue'
-import { useTeamStore } from '@/stores/team'
+import { useTeamStore, type InviteForm } from '@/stores/team'
 
 const teamStore = useTeamStore()
 
@@ -275,7 +275,7 @@ const teamStore = useTeamStore()
 const showInviteModal = ref(false)
 const searchQuery = ref('')
 const roleFilter = ref('')
-const inviteForm = ref({
+const inviteForm = ref<InviteForm>({
   email: '',
   role: 'viewer',
   message: ''

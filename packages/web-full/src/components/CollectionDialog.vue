@@ -69,10 +69,10 @@ const emit = defineEmits<Emits>()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 
-const form = ref({
+const form = ref<ApiCollection>({
   id: '',
   name: '',
-  description: '' as string | undefined,
+  description: '',
   folders: [] as CollectionFolder[],
   requests: [] as CollectionRequest[],
   variables: {} as Record<string, string>,

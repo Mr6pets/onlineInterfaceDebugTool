@@ -201,7 +201,7 @@
               >
                 <el-icon><VideoPlay /></el-icon>
               </el-button>
-              <el-dropdown @command="(command) => handleSuiteAction(command, suite)" trigger="click">
+              <el-dropdown @command="(command: string) => handleSuiteAction(command, suite)" trigger="click">
                 <el-button type="text" size="small">
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>
@@ -310,7 +310,7 @@
               >
                 <el-icon><View /></el-icon>
               </el-button>
-              <el-dropdown @command="(command) => handleSuiteAction(command, suite)" trigger="click">
+              <el-dropdown @command="(command: string) => handleSuiteAction(command, suite)" trigger="click">
                 <el-button type="text" size="small">
                   <el-icon><MoreFilled /></el-icon>
                 </el-button>
@@ -677,7 +677,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
   Plus,
   Upload,
@@ -695,6 +695,7 @@ import {
   Download,
   FolderOpened
 } from '@element-plus/icons-vue'
+import type { Environment } from '@shared/types'
 // 类型定义
 interface TestAssertion {
   id: string
@@ -742,15 +743,7 @@ interface TestSuite {
   executionHistory: ExecutionHistory[]
 }
 
-interface Environment {
-  id: string
-  name: string
-  variables: any[]
-  workspaceId: string
-  createdAt: Date
-  updatedAt: Date
-  createdBy: string
-}
+
 
 interface CreateForm {
   name: string
@@ -890,34 +883,31 @@ const environments = ref<Environment[]>([
   {
     id: 'dev',
     name: '开发环境',
-    variables: [],
-    workspaceId: '1',
+    variables: {},
+    isActive: true,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   },
   {
     id: 'test',
     name: '测试环境',
-    variables: [],
-    workspaceId: '1',
+    variables: {},
+    isActive: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   },
   {
     id: 'prod',
     name: '生产环境',
-    variables: [],
-    workspaceId: '1',
+    variables: {},
+    isActive: false,
     createdAt: new Date(),
-    updatedAt: new Date(),
-    createdBy: '1'
+    updatedAt: new Date()
   }
 ])
 
 // 表单验证规则
-const createFormRules: FormRules = {
+const createFormRules = {
   name: [
     { required: true, message: '请输入测试套件名称', trigger: 'blur' }
   ],
@@ -1076,7 +1066,7 @@ const viewSuiteDetails = (suite: TestSuite) => {
 const runSuite = async (suite: TestSuite) => {
   if (suite.status === 'running') return
   
-  suite.status = 'running'
+  suite.status = 'running' as const
   suite.progress = 0
   
   // 模拟执行过程
@@ -1084,7 +1074,7 @@ const runSuite = async (suite: TestSuite) => {
     suite.progress += Math.random() * 20
     if (suite.progress >= 100) {
       suite.progress = 100
-      suite.status = 'completed'
+      suite.status = 'completed' as const
       suite.lastRunAt = new Date()
       suite.executionTime = Math.floor(Math.random() * 60) + 30
       clearInterval(interval)
@@ -1112,16 +1102,16 @@ const handleSuiteAction = async (command: string, suite: TestSuite) => {
   }
 }
 
-const editSuite = async (suite: TestSuite) => {
+const editSuite = async (_suite: TestSuite) => {
   ElMessage.info('编辑功能开发中')
 }
 
 const duplicateSuite = async (suite: TestSuite) => {
-  const newSuite = {
+  const newSuite: TestSuite = {
     ...suite,
     id: Date.now().toString(),
     name: `${suite.name} (副本)`,
-    status: 'pending',
+    status: 'pending' as const,
     progress: 0,
     lastRunAt: new Date()
   }
@@ -1228,10 +1218,10 @@ const handleCreateSuite = async () => {
     // 模拟创建测试套件
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    const newSuite = {
+    const newSuite: TestSuite = {
       id: Date.now().toString(),
       ...createForm.value,
-      status: 'pending',
+      status: 'pending' as const,
       testCount: 0,
       passRate: 0,
       executionTime: 0,
@@ -1274,11 +1264,11 @@ const importFromCollection = () => {
   ElMessage.info('从集合导入功能开发中')
 }
 
-const editTestCase = (testCase: TestCase) => {
+const editTestCase = (_testCase: TestCase) => {
   ElMessage.info('编辑测试用例功能开发中')
 }
 
-const runSingleTest = (testCase: TestCase) => {
+const runSingleTest = (_testCase: TestCase) => {
   ElMessage.info('单独执行测试功能开发中')
 }
 
@@ -1289,11 +1279,11 @@ const removeTestCase = (index: number) => {
   }
 }
 
-const viewExecutionReport = (execution: ExecutionHistory) => {
+const viewExecutionReport = (_execution: ExecutionHistory) => {
   ElMessage.info('查看执行报告功能开发中')
 }
 
-const downloadReport = (execution: ExecutionHistory) => {
+const downloadReport = (_execution: ExecutionHistory) => {
   ElMessage.info('下载报告功能开发中')
 }
 

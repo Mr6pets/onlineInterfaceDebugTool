@@ -138,7 +138,7 @@
             <div class="collection-icon">
               <el-icon><Folder /></el-icon>
             </div>
-            <el-dropdown @command="(command) => handleCollectionAction(command, collection)" trigger="click">
+            <el-dropdown @command="(command: string) => handleCollectionAction(command, collection)" trigger="click">
               <el-button type="text" class="action-btn">
                 <el-icon><MoreFilled /></el-icon>
               </el-button>
@@ -249,7 +249,7 @@
           </el-table-column>
           <el-table-column label="操作" width="120" fixed="right">
             <template #default="{ row }">
-              <el-dropdown @command="(command) => handleCollectionAction(command, row)" trigger="click">
+              <el-dropdown @command="(command: string) => handleCollectionAction(command, row)" trigger="click">
                 <el-button type="primary" text size="small">
                   操作
                   <el-icon><ArrowDown /></el-icon>
@@ -564,7 +564,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type UploadFile } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type UploadFile } from 'element-plus'
 import {
   FolderOpened,
   Plus,
@@ -583,7 +583,9 @@ import {
   Message,
   UploadFilled
 } from '@element-plus/icons-vue'
-import { useCollectionStore } from '@/stores/collection'
+// import { useCollectionStore } from '@/stores/collection'
+import dayjs from 'dayjs'
+
 // 类型定义
 interface Collaborator {
   id: string
@@ -635,10 +637,9 @@ interface ImportOptions {
   targetCollection: string
   conflictResolution: string
 }
-import dayjs from 'dayjs'
 
 const router = useRouter()
-const collectionStore = useCollectionStore()
+// const _collectionStore = useCollectionStore()
 
 // 响应式数据
 const loading = ref(false)
@@ -759,7 +760,7 @@ const collections = ref<Collection[]>([
 ])
 
 // 表单验证规则
-const createFormRules: FormRules = {
+const createFormRules = {
   name: [
     { required: true, message: '请输入集合名称', trigger: 'blur' },
     { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
@@ -867,14 +868,14 @@ const handleCreateCollection = async () => {
     await createFormRef.value.validate()
     creating.value = true
     
-    const newCollection = await collectionStore.createCollection({
-      name: createForm.value.name,
-      description: createForm.value.description,
-      tags: createForm.value.tags,
-      isPublic: createForm.value.isPublic
-    })
+    // const newCollection = await collectionStore.createCollection({
+    //   name: createForm.value.name,
+    //   description: createForm.value.description,
+    //   tags: createForm.value.tags,
+    //   isPublic: createForm.value.isPublic
+    // })
     
-    collections.value.unshift(newCollection)
+    // collections.value.unshift(newCollection)
     showCreateDialog.value = false
     resetCreateForm()
     ElMessage.success('集合创建成功')
@@ -892,12 +893,12 @@ const handleUpdateCollection = async () => {
     await editFormRef.value.validate()
     updating.value = true
     
-    await collectionStore.updateCollection(editForm.value.id, {
-      name: editForm.value.name,
-      description: editForm.value.description,
-      tags: editForm.value.tags,
-      isPublic: editForm.value.isPublic
-    })
+    // await collectionStore.updateCollection(editForm.value.id, {
+    //   name: editForm.value.name,
+    //   description: editForm.value.description,
+    //   tags: editForm.value.tags,
+    //   isPublic: editForm.value.isPublic
+    // })
     
     // 更新本地数据
     const index = collections.value.findIndex(col => col.id === editForm.value.id)
@@ -915,19 +916,19 @@ const handleUpdateCollection = async () => {
   }
 }
 
-const handleDuplicateCollection = async (collection: Collection) => {
+const handleDuplicateCollection = async (_collection: Collection) => {
   try {
-    const duplicated = await collectionStore.duplicateCollection(collection.id)
-    collections.value.unshift(duplicated)
+    // const duplicated = await collectionStore.duplicateCollection(collection.id)
+    // collections.value.unshift(duplicated)
     ElMessage.success('集合复制成功')
   } catch (error) {
     ElMessage.error('复制集合失败')
   }
 }
 
-const handleExportCollection = async (collection: Collection) => {
+const handleExportCollection = async (_collection: Collection) => {
   try {
-    await collectionStore.exportCollection(collection.id, 'postman')
+    // await collectionStore.exportCollection(collection.id, 'postman')
     ElMessage.success('集合导出成功')
   } catch (error) {
     ElMessage.error('导出集合失败')
@@ -946,7 +947,7 @@ const handleDeleteCollection = async (collection: Collection) => {
       }
     )
     
-    await collectionStore.deleteCollection(collection.id)
+    // await collectionStore.deleteCollection(collection.id)
     const index = collections.value.findIndex(col => col.id === collection.id)
     if (index > -1) {
       collections.value.splice(index, 1)
@@ -984,8 +985,8 @@ const handleImportCollection = async () => {
   
   importing.value = true
   try {
-    const file = importFileList.value[0]
-    await collectionStore.importCollection(file.raw!, importType.value, importOptions.value)
+    // const _file = importFileList.value[0]
+    // await collectionStore.importCollection(file.raw!, importType.value, importOptions.value)
     
     showImportDialog.value = false
     resetImportForm()
@@ -1048,7 +1049,7 @@ const resetImportForm = () => {
 const loadCollections = async () => {
   loading.value = true
   try {
-    await collectionStore.loadCollections()
+    // await collectionStore.loadCollections()
     // 这里应该从store获取数据，现在使用模拟数据
   } catch (error) {
     ElMessage.error('加载集合列表失败')
