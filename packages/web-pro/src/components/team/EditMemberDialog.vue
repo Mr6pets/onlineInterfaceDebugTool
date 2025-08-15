@@ -246,7 +246,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Upload, Delete, Setting } from '@element-plus/icons-vue'
+// 移除未使用的图标导入
 import PermissionsDialog from './PermissionsDialog.vue'
 import type { TeamMember } from '@/types'
 
@@ -391,7 +391,7 @@ const onRoleChange = (role: string) => {
 }
 
 // 权限保存处理
-const onPermissionsSave = (memberId: string, permissions: any) => {
+const onPermissionsSave = (_memberId: string, permissions: any) => {
   selectedPermissions.value = Object.keys(permissions.basic).filter(key => permissions.basic[key])
   ElMessage.success('权限配置已更新')
 }
@@ -446,7 +446,9 @@ const saveMember = async () => {
     const memberData: TeamMember = {
       ...form.value,
       permissions: selectedPermissions.value,
-      updatedAt: new Date().toISOString()
+      joinedAt: props.member?.joinedAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: (form.value.status === 'invited' ? 'pending' : form.value.status) as 'active' | 'inactive' | 'pending' | 'suspended'
     }
     
     emit('save', memberData)
@@ -475,7 +477,7 @@ const resetForm = () => {
           phone: member.phone || '',
           location: member.location || '',
           role: member.role || 'viewer',
-          status: member.status || 'active',
+          status: (member.status as 'active' | 'invited' | 'suspended') || 'active',
           suspendReason: member.suspendReason || '',
           suspendUntil: member.suspendUntil || '',
           notifications: {

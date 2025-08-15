@@ -319,7 +319,7 @@ const handleSubmit = async () => {
       description: form.description,
       environment: form.environment,
       baseUrl: form.baseUrl,
-      status: form.status as 'idle' | 'running' | 'completed' | 'failed',
+      status: form.status as 'active' | 'inactive' | 'draft',
       config: {
         timeout: form.timeout,
         retryCount: form.retryCount,

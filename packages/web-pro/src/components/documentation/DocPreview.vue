@@ -60,9 +60,9 @@
       </div>
       
       <!-- API 分组 -->
-      <div class="api-groups" v-if="documentation.apiGroups && documentation.apiGroups.length">
+      <div class="api-groups" v-if="documentation.groups && documentation.groups.length">
         <div
-          v-for="group in documentation.apiGroups"
+          v-for="group in documentation.groups"
           :key="group.id"
           class="api-group"
         >
@@ -71,7 +71,7 @@
           
           <div class="api-list">
             <div
-              v-for="api in group.apis"
+              v-for="api in group.children"
               :key="api.id"
               class="api-item"
             >
@@ -233,16 +233,16 @@
               </div>
               
               <!-- 代码示例 -->
-              <div class="api-section" v-if="api.examples && api.examples.length">
+              <div class="api-section" v-if="api.examples && Object.keys(api.examples).length > 0">
                 <h4>代码示例</h4>
                 <el-tabs class="example-tabs">
                   <el-tab-pane
-                    v-for="example in api.examples"
-                    :key="example.language"
-                    :label="example.language"
+                    v-for="(code, language) in api.examples"
+                    :key="language"
+                    :label="language"
                   >
                     <div class="code-block">
-                      <pre><code>{{ example.code }}</code></pre>
+                      <pre><code>{{ code }}</code></pre>
                     </div>
                   </el-tab-pane>
                 </el-tabs>
@@ -337,7 +337,8 @@ const themeStyles = computed(() => {
 })
 
 // 获取状态类型
-const getStatusType = (status: string) => {
+const getStatusType = (status?: string) => {
+  if (!status) return 'info'
   const statusMap: Record<string, string> = {
     draft: 'info',
     published: 'success',
@@ -347,7 +348,8 @@ const getStatusType = (status: string) => {
 }
 
 // 获取状态文本
-const getStatusText = (status: string) => {
+const getStatusText = (status?: string) => {
+  if (!status) return '未知'
   const statusMap: Record<string, string> = {
     draft: '草稿',
     published: '已发布',
@@ -369,8 +371,8 @@ const getMethodType = (method: string) => {
 }
 
 // 获取状态码类型
-const getStatusCodeType = (statusCode: string) => {
-  const code = parseInt(statusCode)
+const getStatusCodeType = (statusCode: string | number) => {
+  const code = typeof statusCode === 'string' ? parseInt(statusCode) : statusCode
   if (code >= 200 && code < 300) return 'success'
   if (code >= 300 && code < 400) return 'warning'
   if (code >= 400) return 'danger'

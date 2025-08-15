@@ -44,28 +44,37 @@ export const usePerformanceStore = defineStore('performance', () => {
   const metrics = ref<ExtendedPerformanceMetrics[]>([])
   const loading = ref(false)
   const settings = ref<PerformanceSettings>({
-    alertThreshold: {
-      responseTime: 1000,
-      errorRate: 5,
-      throughput: 100
-    },
-    monitoringInterval: 30,
+    sampleRate: 1,
     retentionDays: 30,
-    enableRealTimeAlerts: true,
-    enablePerformanceOptimization: true
+    autoRefresh: true,
+    refreshInterval: 30000,
+    responseTimeAlert: true,
+    responseTimeThreshold: 1000,
+    errorRateAlert: true,
+    errorRateThreshold: 5,
+    defaultTimeRange: '1h',
+    chartTheme: 'auto',
+    visibleCharts: ['responseTime', 'requestVolume', 'errorRate'],
+    exportFormat: ['json', 'csv'],
+    includeCharts: true
   })
 
   // 计算属性
   const summary = computed((): PerformanceSummary => {
     if (metrics.value.length === 0) {
       return {
-        avgDuration: 0,
-        successRate: 0,
         totalRequests: 0,
+        successfulRequests: 0,
+        failedRequests: 0,
         errorRate: 0,
+        avgResponseTime: 0,
+        minResponseTime: 0,
+        maxResponseTime: 0,
+        p50ResponseTime: 0,
+        p95ResponseTime: 0,
+        p99ResponseTime: 0,
         throughput: 0,
-        p95Duration: 0,
-        p99Duration: 0
+        duration: 0
       }
     }
 
@@ -75,27 +84,33 @@ export const usePerformanceStore = defineStore('performance', () => {
     const successRate = (successfulRequests / totalRequests) * 100
     const errorRate = 100 - successRate
 
-    // 计算 P95 和 P99
-    const sortedDurations = metrics.value.map(m => m.duration).sort((a, b) => a - b)
-    const p95Index = Math.floor(sortedDurations.length * 0.95)
-    const p99Index = Math.floor(sortedDurations.length * 0.99)
-    const p95Duration = sortedDurations[p95Index] || 0
-    const p99Duration = sortedDurations[p99Index] || 0
-
     // 计算吞吐量 (每分钟请求数)
     const timeSpan = metrics.value.length > 0 ? 
       (new Date(metrics.value[metrics.value.length - 1].timestamp).getTime() - 
        new Date(metrics.value[0].timestamp).getTime()) / (1000 * 60) : 1
     const throughput = totalRequests / Math.max(timeSpan, 1)
 
+    const failedRequests = totalRequests - successfulRequests
+    const durations = metrics.value.map(m => m.duration).sort((a, b) => a - b)
+    const p50 = durations[Math.floor(durations.length * 0.5)] || 0
+    const p95 = durations[Math.floor(durations.length * 0.95)] || 0
+    const p99 = durations[Math.floor(durations.length * 0.99)] || 0
+    const minDuration = Math.min(...durations) || 0
+    const maxDuration = Math.max(...durations) || 0
+    
     return {
-      avgDuration: Math.round(avgDuration),
-      successRate: Math.round(successRate * 100) / 100,
       totalRequests,
+      successfulRequests,
+      failedRequests,
       errorRate: Math.round(errorRate * 100) / 100,
+      avgResponseTime: Math.round(avgDuration),
+      minResponseTime: Math.round(minDuration),
+      maxResponseTime: Math.round(maxDuration),
+      p50ResponseTime: Math.round(p50),
+      p95ResponseTime: Math.round(p95),
+      p99ResponseTime: Math.round(p99),
       throughput: Math.round(throughput * 100) / 100,
-      p95Duration: Math.round(p95Duration),
-      p99Duration: Math.round(p99Duration)
+      duration: Math.round(avgDuration)
     }
   })
 
@@ -131,7 +146,7 @@ export const usePerformanceStore = defineStore('performance', () => {
 
   const requestVolumeData = computed((): RequestVolumeData[] => {
     // 按小时分组数据
-    const hourlyData = new Map<string, PerformanceMetrics[]>()
+    const hourlyData = new Map<string, ExtendedPerformanceMetrics[]>()
     
     metrics.value.forEach(metric => {
       const hour = new Date(metric.timestamp)
@@ -160,7 +175,7 @@ export const usePerformanceStore = defineStore('performance', () => {
 
   const waterfallData = computed((): WaterfallData[] => {
     // 生成模拟瀑布图数据
-    return metrics.value.slice(0, 10).map((metric, index) => {
+    return metrics.value.slice(0, 10).map((metric) => {
       const phases = [
         { type: 'dns' as const, duration: Math.random() * 50 + 10 },
         { type: 'connect' as const, duration: Math.random() * 100 + 50 },
@@ -218,14 +233,29 @@ export const usePerformanceStore = defineStore('performance', () => {
 
       for (let i = 0; i < 100; i++) {
         const timestamp = new Date(startTime + i * interval)
+        const duration = Math.random() * 2000 + 100
+        const startTimeMs = timestamp.getTime()
+        const endTimeMs = startTimeMs + duration
+        
         mockData.push({
           id: `metric-${i}`,
+          requestId: `req-${i}`,
           timestamp: timestamp.toISOString(),
           url: `/api/endpoint-${Math.floor(Math.random() * 10)}`,
           method: ['GET', 'POST', 'PUT', 'DELETE'][Math.floor(Math.random() * 4)],
+          startTime: startTimeMs,
+          endTime: endTimeMs,
+          duration: Math.round(duration),
+          dnsLookup: Math.round(Math.random() * 50 + 10),
+          tcpConnect: Math.round(Math.random() * 100 + 50),
+          tlsHandshake: Math.round(Math.random() * 80 + 20),
+          firstByte: Math.round(Math.random() * 200 + 100),
+          contentDownload: Math.round(Math.random() * 300 + 200),
+          totalSize: Math.round(Math.random() * 10000 + 1000),
+          transferSize: Math.round(Math.random() * 8000 + 800),
+          resourceSize: Math.round(Math.random() * 12000 + 1200),
           status: Math.random() > 0.1 ? 200 : [400, 404, 500][Math.floor(Math.random() * 3)],
-          duration: Math.random() * 2000 + 100,
-          size: Math.random() * 10000 + 1000,
+          size: Math.round(Math.random() * 10000 + 1000),
           userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         })
       }

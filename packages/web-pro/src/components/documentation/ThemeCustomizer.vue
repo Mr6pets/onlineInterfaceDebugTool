@@ -57,7 +57,7 @@
             <h4>字体设置</h4>
             <div class="setting-item">
               <label>主字体</label>
-              <el-select v-model="theme.typography.fontFamily" placeholder="选择字体">
+              <el-select v-model="theme.typography!.fontFamily" placeholder="选择字体">
                 <el-option label="系统默认" value="system" />
                 <el-option label="思源黑体" value="Source Han Sans" />
                 <el-option label="微软雅黑" value="Microsoft YaHei" />
@@ -70,7 +70,7 @@
             <div class="setting-item">
               <label>基础字号</label>
               <el-slider
-                v-model="theme.typography.fontSize"
+                v-model="theme.typography!.fontSize"
                 :min="12"
                 :max="18"
                 :step="1"
@@ -81,7 +81,7 @@
             <div class="setting-item">
               <label>行高</label>
               <el-slider
-                v-model="theme.typography.lineHeight"
+                v-model="theme.typography!.lineHeight"
                 :min="1.2"
                 :max="2.0"
                 :step="0.1"
@@ -98,23 +98,23 @@
             <div class="color-grid">
               <div class="color-item">
                 <label>主色调</label>
-                <el-color-picker v-model="theme.colors.primary" />
+                <el-color-picker v-model="theme.colors!.primary" />
               </div>
               <div class="color-item">
                 <label>成功色</label>
-                <el-color-picker v-model="theme.colors.success" />
+                <el-color-picker v-model="theme.colors!.success" />
               </div>
               <div class="color-item">
                 <label>警告色</label>
-                <el-color-picker v-model="theme.colors.warning" />
+                <el-color-picker v-model="theme.colors!.warning" />
               </div>
               <div class="color-item">
                 <label>错误色</label>
-                <el-color-picker v-model="theme.colors.error" />
+                <el-color-picker v-model="theme.colors!.error" />
               </div>
               <div class="color-item">
                 <label>信息色</label>
-                <el-color-picker v-model="theme.colors.info" />
+                <el-color-picker v-model="theme.colors!.info" />
               </div>
             </div>
           </div>
@@ -124,19 +124,19 @@
             <div class="color-grid">
               <div class="color-item">
                 <label>页面背景</label>
-                <el-color-picker v-model="theme.colors.background" />
+                <el-color-picker v-model="theme.colors!.background" />
               </div>
               <div class="color-item">
                 <label>内容背景</label>
-                <el-color-picker v-model="theme.colors.surface" />
+                <el-color-picker v-model="theme.colors!.surface" />
               </div>
               <div class="color-item">
                 <label>侧边栏背景</label>
-                <el-color-picker v-model="theme.colors.sidebar" />
+                <el-color-picker v-model="theme.colors!.sidebar" />
               </div>
               <div class="color-item">
                 <label>头部背景</label>
-                <el-color-picker v-model="theme.colors.header" />
+                <el-color-picker v-model="theme.colors!.header" />
               </div>
             </div>
           </div>
@@ -146,19 +146,19 @@
             <div class="color-grid">
               <div class="color-item">
                 <label>主文本</label>
-                <el-color-picker v-model="theme.colors.textPrimary" />
+                <el-color-picker v-model="theme.colors!.textPrimary" />
               </div>
               <div class="color-item">
                 <label>次要文本</label>
-                <el-color-picker v-model="theme.colors.textSecondary" />
+                <el-color-picker v-model="theme.colors!.textSecondary" />
               </div>
               <div class="color-item">
                 <label>禁用文本</label>
-                <el-color-picker v-model="theme.colors.textDisabled" />
+                <el-color-picker v-model="theme.colors!.textDisabled" />
               </div>
               <div class="color-item">
                 <label>链接色</label>
-                <el-color-picker v-model="theme.colors.link" />
+                <el-color-picker v-model="theme.colors!.link" />
               </div>
             </div>
           </div>
@@ -171,7 +171,7 @@
             <div class="setting-item">
               <label>圆角大小</label>
               <el-slider
-                v-model="theme.components.button.borderRadius"
+                v-model="theme.components!.button!.borderRadius"
                 :min="0"
                 :max="20"
                 :step="1"
@@ -182,7 +182,7 @@
             <div class="setting-item">
               <label>按钮高度</label>
               <el-slider
-                v-model="theme.components.button.height"
+                v-model="theme.components!.button!.height"
                 :min="28"
                 :max="48"
                 :step="2"
@@ -196,7 +196,7 @@
             <div class="setting-item">
               <label>圆角大小</label>
               <el-slider
-                v-model="theme.components.card.borderRadius"
+                v-model="theme.components!.card!.borderRadius"
                 :min="0"
                 :max="20"
                 :step="1"
@@ -206,7 +206,7 @@
             
             <div class="setting-item">
               <label>阴影强度</label>
-              <el-radio-group v-model="theme.components.card.shadow">
+              <el-radio-group v-model="theme.components!.card!.shadow">
                 <el-radio label="none">无阴影</el-radio>
                 <el-radio label="small">轻微</el-radio>
                 <el-radio label="medium">中等</el-radio>
@@ -219,17 +219,17 @@
             <h4>表格样式</h4>
             <div class="setting-item">
               <label>斑马纹</label>
-              <el-switch v-model="theme.components.table.stripe" />
+              <el-switch v-model="theme.components!.table!.stripe" />
             </div>
             
             <div class="setting-item">
               <label>边框</label>
-              <el-switch v-model="theme.components.table.border" />
+              <el-switch v-model="theme.components!.table!.border" />
             </div>
             
             <div class="setting-item">
               <label>行高</label>
-              <el-radio-group v-model="theme.components.table.size">
+              <el-radio-group v-model="theme.components!.table!.size">
                 <el-radio label="small">紧凑</el-radio>
                 <el-radio label="default">默认</el-radio>
                 <el-radio label="large">宽松</el-radio>
@@ -249,9 +249,9 @@
               @click="applyPreset(preset)"
             >
               <div class="preset-preview">
-                <div class="preview-header" :style="{ backgroundColor: preset.colors.primary }"></div>
-                <div class="preview-sidebar" :style="{ backgroundColor: preset.colors.sidebar }"></div>
-                <div class="preview-content" :style="{ backgroundColor: preset.colors.background }"></div>
+                <div class="preview-header" :style="{ backgroundColor: preset.primaryColor }"></div>
+                <div class="preview-sidebar" :style="{ backgroundColor: preset.secondaryColor }"></div>
+                <div class="preview-content" :style="{ backgroundColor: '#ffffff' }"></div>
               </div>
               <div class="preset-info">
                 <h5>{{ preset.label }}</h5>
@@ -309,15 +309,15 @@ import {
   Download,
   Upload
 } from '@element-plus/icons-vue'
-import type { DocumentationTheme } from '@/types'
+import type { DocTheme } from '@/types'
 
 interface Props {
-  modelValue: DocumentationTheme
+  modelValue: DocTheme
   showPreview?: boolean
 }
 
 interface Emits {
-  'update:modelValue': [value: DocumentationTheme]
+  'update:modelValue': [value: DocTheme]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -341,152 +341,53 @@ const presetThemes = [
     name: 'default',
     label: '默认主题',
     description: '简洁清爽的默认主题',
-    colors: {
-      primary: '#409EFF',
-      success: '#67C23A',
-      warning: '#E6A23C',
-      error: '#F56C6C',
-      info: '#909399',
-      background: '#ffffff',
-      surface: '#ffffff',
-      sidebar: '#f8f9fa',
-      header: '#ffffff',
-      textPrimary: '#303133',
-      textSecondary: '#606266',
-      textDisabled: '#C0C4CC',
-      link: '#409EFF'
-    },
+    primaryColor: '#409EFF',
+    secondaryColor: '#67C23A',
+    fontFamily: 'system',
     layout: {
-      mode: 'sidebar',
-      width: 'fluid',
-      maxWidth: 1200
+      type: 'sidebar' as const
     },
-    typography: {
-      fontFamily: 'system',
-      fontSize: 14,
-      lineHeight: 1.5
-    },
-    components: {
-      button: {
-        borderRadius: 4,
-        height: 32
-      },
-      card: {
-        borderRadius: 6,
-        shadow: 'small'
-      },
-      table: {
-        stripe: true,
-        border: true,
-        size: 'default'
-      }
-    }
+    codeTheme: 'light' as const
   },
   {
     name: 'dark',
     label: '深色主题',
     description: '护眼的深色主题',
-    colors: {
-      primary: '#409EFF',
-      success: '#67C23A',
-      warning: '#E6A23C',
-      error: '#F56C6C',
-      info: '#909399',
-      background: '#1a1a1a',
-      surface: '#2d2d2d',
-      sidebar: '#262626',
-      header: '#1f1f1f',
-      textPrimary: '#ffffff',
-      textSecondary: '#cccccc',
-      textDisabled: '#666666',
-      link: '#409EFF'
-    },
+    primaryColor: '#409EFF',
+    secondaryColor: '#67C23A',
+    fontFamily: 'system',
     layout: {
-      mode: 'sidebar',
-      width: 'fluid',
-      maxWidth: 1200
+      type: 'sidebar' as const
     },
-    typography: {
-      fontFamily: 'system',
-      fontSize: 14,
-      lineHeight: 1.5
-    },
-    components: {
-      button: {
-        borderRadius: 4,
-        height: 32
-      },
-      card: {
-        borderRadius: 6,
-        shadow: 'medium'
-      },
-      table: {
-        stripe: true,
-        border: false,
-        size: 'default'
-      }
-    }
+    codeTheme: 'dark' as const
   },
   {
     name: 'minimal',
     label: '极简主题',
     description: '极简风格的主题',
-    colors: {
-      primary: '#000000',
-      success: '#52c41a',
-      warning: '#faad14',
-      error: '#ff4d4f',
-      info: '#1890ff',
-      background: '#ffffff',
-      surface: '#ffffff',
-      sidebar: '#fafafa',
-      header: '#ffffff',
-      textPrimary: '#000000',
-      textSecondary: '#666666',
-      textDisabled: '#cccccc',
-      link: '#000000'
-    },
+    primaryColor: '#000000',
+    secondaryColor: '#52c41a',
+    fontFamily: 'system',
     layout: {
-      mode: 'topbar',
-      width: 'boxed',
-      maxWidth: 1000
+      type: 'topbar' as const
     },
-    typography: {
-      fontFamily: 'system',
-      fontSize: 15,
-      lineHeight: 1.6
-    },
-    components: {
-      button: {
-        borderRadius: 0,
-        height: 36
-      },
-      card: {
-        borderRadius: 0,
-        shadow: 'none'
-      },
-      table: {
-        stripe: false,
-        border: true,
-        size: 'large'
-      }
-    }
+    codeTheme: 'light' as const
   }
 ]
 
 // 计算预览样式
 const previewStyles = computed(() => ({
-  backgroundColor: theme.value.colors.background,
-  color: theme.value.colors.textPrimary,
-  fontFamily: theme.value.typography.fontFamily === 'system' ? 'system-ui' : theme.value.typography.fontFamily,
-  fontSize: `${theme.value.typography.fontSize}px`,
-  lineHeight: theme.value.typography.lineHeight
+  backgroundColor: '#ffffff',
+  color: '#303133',
+  fontFamily: theme.value.fontFamily === 'system' ? 'system-ui' : theme.value.fontFamily,
+  fontSize: '14px',
+  lineHeight: '1.5'
 }))
 
 const buttonStyles = computed(() => ({
-  backgroundColor: theme.value.colors.primary,
-  borderRadius: `${theme.value.components.button.borderRadius}px`,
-  height: `${theme.value.components.button.height}px`,
+  backgroundColor: theme.value.primaryColor,
+  borderRadius: '4px',
+  height: '32px',
   color: '#ffffff'
 }))
 
@@ -544,7 +445,11 @@ watch(
   () => {
     // 检查是否匹配预设主题
     const matchedPreset = presetThemes.find(preset => 
-      JSON.stringify(preset.colors) === JSON.stringify(theme.value.colors)
+      preset.primaryColor === theme.value.primaryColor &&
+      preset.secondaryColor === theme.value.secondaryColor &&
+      preset.fontFamily === theme.value.fontFamily &&
+      preset.layout.type === theme.value.layout.type &&
+      preset.codeTheme === theme.value.codeTheme
     )
     currentPreset.value = matchedPreset?.name || 'custom'
   },

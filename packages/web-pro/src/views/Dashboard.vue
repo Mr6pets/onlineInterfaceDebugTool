@@ -155,15 +155,19 @@ const templates = ref<DashboardTemplate[]>([
   {
     id: 'api-performance',
     name: 'API性能监控',
-    description: '监控API响应时间、成功率等关键指标',
-    preview: '/templates/api-performance.png',
+    description: '监控API响应时间、错误率等关键指标',
+    preview: '/images/templates/api-performance.png',
+    category: 'monitoring',
+    isOfficial: true,
     widgets: []
   },
   {
     id: 'user-behavior',
     name: '用户行为分析',
-    description: '分析用户使用模式和行为趋势',
-    preview: '/templates/user-behavior.png',
+    description: '分析用户访问模式和行为轨迹',
+    preview: '/images/templates/user-behavior.png',
+    category: 'analytics',
+    isOfficial: true,
     widgets: []
   }
 ])
@@ -200,6 +204,7 @@ const createDashboard = async () => {
       name: newDashboard.value.name,
       description: newDashboard.value.description,
       widgets: [],
+      isPublic: false,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -246,7 +251,7 @@ const useTemplate = (template: DashboardTemplate) => {
   showCreateDashboardDialog.value = true
 }
 
-const handleWidgetAction = ({ action, widget }: { action: string; widget: Widget }) => {
+const handleWidgetAction = ({ action }: { action: string; widget: Widget }) => {
   switch (action) {
     case 'edit':
       // 编辑组件逻辑
@@ -267,7 +272,7 @@ const getWidgetStyle = (widget: Widget) => {
   }
 }
 
-const getWidgetComponent = (type: string) => {
+const getWidgetComponent = (_type: string) => {
   // 根据类型返回对应的组件
   return 'div'
 }
@@ -281,6 +286,7 @@ onMounted(() => {
       name: '默认仪表板',
       description: '系统默认仪表板',
       widgets: [],
+      isPublic: false,
       createdAt: new Date(),
       updatedAt: new Date()
     }

@@ -115,14 +115,14 @@
             
             <!-- 嵌套对象 -->
             <div v-if="property.type === 'object'" class="nested-object">
-              <SchemaEditor v-model="property.properties" :level="level + 1" />
+              <SchemaEditor v-if="property.properties" v-model="property" :level="level + 1" />
             </div>
             
             <!-- 数组项 -->
             <div v-if="property.type === 'array'" class="array-items">
               <div class="array-item-type">
                 <span>数组项类型:</span>
-                <el-select v-model="property.items.type" size="small">
+                <el-select v-if="property.items" v-model="property.items.type" size="small">
                   <el-option label="string" value="string" />
                   <el-option label="number" value="number" />
                   <el-option label="integer" value="integer" />
@@ -132,7 +132,7 @@
               </div>
               
               <div v-if="property.items?.type === 'object'" class="array-object-schema">
-                <SchemaEditor v-model="property.items.properties" :level="level + 1" />
+                <SchemaEditor v-if="property.items.properties" v-model="property.items" :level="level + 1" />
               </div>
             </div>
           </div>
@@ -141,7 +141,7 @@
         <div v-if="schema.type === 'array'" class="array-schema">
           <div class="array-item-type">
             <span>数组项类型:</span>
-            <el-select v-model="schema.items.type" size="small">
+            <el-select v-if="schema.items" v-model="schema.items.type" size="small">
               <el-option label="string" value="string" />
               <el-option label="number" value="number" />
               <el-option label="integer" value="integer" />
@@ -151,7 +151,7 @@
           </div>
           
           <div v-if="schema.items?.type === 'object'" class="array-object-schema">
-            <SchemaEditor v-model="schema.items.properties" :level="level + 1" />
+            <SchemaEditor v-if="schema.items.properties" v-model="schema.items" :level="level + 1" />
           </div>
         </div>
       </div>

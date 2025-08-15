@@ -2,13 +2,14 @@ import { defineStore } from 'pinia'
 import type { 
   MockRoute, 
   MockServerSettings, 
-  MockCondition
+  MockCondition,
+  MockLog
 } from '@/types'
 
 interface MockState {
   routes: MockRoute[]
   settings: MockServerSettings
-  requestLogs: any[]
+  requestLogs: MockLog[]
   serverInstance: any
   isRunning: boolean
 }
@@ -165,7 +166,7 @@ export const useMockStore = defineStore('mock', {
       }
     },
 
-    addRequestLog(log: any) {
+    addRequestLog(log: MockLog) {
       this.requestLogs.push(log)
       
       // 限制日志数量
@@ -176,6 +177,19 @@ export const useMockStore = defineStore('mock', {
 
     async clearLogs() {
       this.requestLogs = []
+    },
+
+    async exportLogs() {
+      const data = JSON.stringify(this.requestLogs, null, 2)
+      const blob = new Blob([data], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `mock-logs-${new Date().toISOString().split('T')[0]}.json`
+      a.click()
+      
+      URL.revokeObjectURL(url)
     },
 
     // Settings management

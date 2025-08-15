@@ -125,8 +125,22 @@ export const useAutomationStore = defineStore('automation', () => {
               order: 2
             }
           ],
-
+          config: {
+            timeout: 30000,
+            retryCount: 0,
+            concurrency: 1,
+            stopOnFailure: false,
+            generateReport: true,
+            enableScreenshot: false,
+            enableLogging: true
+          },
+          notifications: {
+            email: { enabled: false, recipients: [] },
+            webhook: { enabled: false, url: '' },
+            slack: { enabled: false }
+          },
           lastRun: Date.now() - 3600000,
+          createdBy: 'system',
           createdAt: Date.now() - 86400000,
           updatedAt: Date.now() - 3600000
         },
@@ -169,9 +183,10 @@ export const useAutomationStore = defineStore('automation', () => {
             webhook: { enabled: false, url: '' },
             slack: { enabled: false }
           },
-          lastRun: null,
-          createdAt: Date.now() - 172800000,
-          updatedAt: Date.now() - 86400000
+        lastRun: null,
+        createdBy: 'system',
+        createdAt: Date.now() - 172800000,
+        updatedAt: Date.now() - 86400000
         }
       ]
     } finally {
@@ -203,6 +218,7 @@ export const useAutomationStore = defineStore('automation', () => {
         webhook: { enabled: false, url: '' },
         slack: { enabled: false }
       },
+      createdBy: 'system',
       createdAt: Date.now(),
       updatedAt: Date.now()
     }
@@ -248,6 +264,7 @@ export const useAutomationStore = defineStore('automation', () => {
           duration: Math.floor(Math.random() * 2000) + 500,
           timestamp: Date.now(),
           environment: suite.environment,
+          executor: 'system',
           request: {
             method: test.method,
             url: test.url,

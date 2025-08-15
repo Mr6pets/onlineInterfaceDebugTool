@@ -314,7 +314,7 @@
 import { ref, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-import type { Team, TeamMember } from '@/types'
+import type { Team } from '@/types'
 
 interface Props {
   modelValue: boolean
