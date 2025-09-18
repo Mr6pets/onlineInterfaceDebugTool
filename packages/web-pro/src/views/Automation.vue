@@ -159,6 +159,7 @@
     <!-- 定时任务对话框 -->
     <ScheduleDialog
       v-model="showScheduleDialog"
+      :suites="suites"
       :schedules="schedules"
       @save="handleSaveSchedule"
     />
@@ -183,7 +184,7 @@ import EditSuiteDialog from '@/components/automation/EditSuiteDialog.vue'
 import ScheduleDialog from '@/components/automation/ScheduleDialog.vue'
 import TestDetailsDialog from '@/components/automation/TestDetailsDialog.vue'
 import { useAutomationStore } from '@/stores/automation'
-import type { TestSuite, TestResult, Schedule } from '@/types'
+import type { TestSuite, TestResult } from '@/types'
 
 const automationStore = useAutomationStore()
 
@@ -242,7 +243,7 @@ const selectSuite = async (suite: TestSuite) => {
   loadingResults.value = true
   try {
     // 获取该套件的测试结果
-    const results = automationStore.getTestResults(suite.id)
+    automationStore.getTestResults(suite.id)
     // 这里可以添加更多逻辑
   } catch (error) {
     ElMessage.error('加载测试结果失败')
@@ -261,7 +262,7 @@ const getSuiteStatusText = (suite: TestSuite) => {
   return suite.enabled ? '启用' : '禁用'
 }
 
-const getSuccessRate = (suite: TestSuite) => {
+const getSuccessRate = (_suite: TestSuite) => {
   // 计算成功率逻辑
   return 95
 }
@@ -317,7 +318,7 @@ const handleSuiteAction = async ({ action, suite }: { action: string, suite: Tes
       
     case 'export':
       try {
-        const results = await automationStore.exportResults('json')
+        await automationStore.exportResults('json')
         // 这里可以添加下载逻辑
         ElMessage.success('导出成功')
       } catch (error) {
@@ -393,7 +394,7 @@ const viewDetailedResults = () => {
 
 const exportResults = async () => {
   try {
-    const results = await automationStore.exportResults('json')
+    await automationStore.exportResults('json')
     // 这里可以添加下载逻辑
     ElMessage.success('导出成功')
   } catch (error) {

@@ -226,7 +226,7 @@ const rules: FormRules = {
   ],
   cronExpression: [
     {
-      validator: (rule, value, callback) => {
+      validator: (_, value, callback) => {
         if (form.type === 'cron' && !value) {
           callback(new Error('请输入Cron表达式'))
         } else if (form.type === 'cron' && value) {
@@ -243,7 +243,7 @@ const rules: FormRules = {
   ],
   interval: [
     {
-      validator: (rule, value, callback) => {
+      validator: (_, value, callback) => {
         if (form.type === 'interval' && (!value || value < 1)) {
           callback(new Error('请输入有效的执行间隔'))
         }
@@ -254,7 +254,7 @@ const rules: FormRules = {
   ],
   executeAt: [
     {
-      validator: (rule, value, callback) => {
+      validator: (_, value, callback) => {
         if (form.type === 'once' && !value) {
           callback(new Error('请选择执行时间'))
         } else if (form.type === 'once' && value) {

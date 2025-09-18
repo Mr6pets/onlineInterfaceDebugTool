@@ -226,12 +226,12 @@
         <el-tabs v-model="activeTab">
           <el-tab-pane label="响应配置" name="response">
             <el-form-item label="状态码">
-              <el-input-number v-model="routeForm.response.statusCode" :min="100" :max="599" />
+              <el-input-number v-model="routeForm.response!.statusCode" :min="100" :max="599" />
             </el-form-item>
             
             <el-form-item label="响应头">
               <div class="headers-editor">
-                <div v-for="(header, index) in routeForm.response.headers" :key="index" class="header-row">
+                <div v-for="(header, index) in routeForm.response?.headers" :key="index" class="header-row">
                   <el-input v-model="header.key" placeholder="Header名称" style="width: 40%" />
                   <el-input v-model="header.value" placeholder="Header值" style="width: 50%; margin: 0 5px" />
                   <el-button @click="removeHeader(index)" type="danger" size="small">
@@ -246,7 +246,7 @@
             </el-form-item>
 
             <el-form-item label="响应体类型">
-              <el-select v-model="routeForm.response.bodyType" style="width: 200px">
+              <el-select v-model="routeForm.response!.bodyType" style="width: 200px">
                 <el-option label="JSON" value="json" />
                 <el-option label="文本" value="text" />
                 <el-option label="HTML" value="html" />
@@ -256,10 +256,10 @@
             
             <el-form-item label="响应体">
               <el-input 
-                v-model="routeForm.response.body" 
+                v-model="routeForm.response!.body" 
                 type="textarea" 
                 :rows="8"
-                :placeholder='routeForm.response.bodyType === "json" ? "{ \"message\": \"Hello World\" }" : "响应内容"'
+                :placeholder='routeForm.response?.bodyType === "json" ? "{ \"message\": \"Hello World\" }" : "响应内容"'
               />
             </el-form-item>
             
@@ -412,7 +412,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { MockRoute, MockServerSettings, MockCondition } from '@/types'
+import type { MockRoute, MockServerSettings, MockLog } from '@/types'
 import { useMockStore } from '@/stores/mock'
 
 const mockStore = useMockStore()
@@ -426,7 +426,7 @@ const showRouteDialog = ref(false)
 const showSettings = ref(false)
 const showLogDetail = ref(false)
 const editingRoute = ref<MockRoute | null>(null)
-const selectedLog = ref(null)
+const selectedLog = ref<MockLog | null>(null)
 const activeTab = ref('response')
 const saving = ref(false)
 
@@ -505,7 +505,7 @@ const toggleServer = async () => {
       ElMessage.success(`Mock服务器已启动: ${serverUrl.value}`)
     }
   } catch (error) {
-    ElMessage.error('服务器操作失败: ' + error.message)
+    ElMessage.error('服务器操作失败: ' + (error as Error).message)
   } finally {
     serverLoading.value = false
   }
@@ -549,10 +549,10 @@ const testRoute = async (route: MockRoute) => {
     const response = await fetch(`${serverUrl.value}${route.path}`, {
       method: route.method
     })
-    const result = await response.text()
+    await response.text()
     ElMessage.success(`测试成功: ${response.status}`)
   } catch (error) {
-    ElMessage.error('测试失败: ' + error.message)
+    ElMessage.error('测试失败: ' + (error as Error).message)
   }
 }
 
@@ -603,8 +603,16 @@ const resetRouteForm = () => {
 }
 
 const addHeader = () => {
-  if (!routeForm.value.response?.headers) {
-    routeForm.value.response = { ...routeForm.value.response, headers: [] }
+  if (!routeForm.value.response) {
+    routeForm.value.response = {
+      statusCode: 200,
+      headers: [],
+      body: '',
+      bodyType: 'json'
+    }
+  }
+  if (!routeForm.value.response.headers) {
+    routeForm.value.response.headers = []
   }
   routeForm.value.response.headers.push({ key: '', value: '' })
 }

@@ -27,39 +27,39 @@ export const useDocumentationStore = defineStore('documentation', () => {
       const query = searchQuery.value.toLowerCase()
       filtered = filtered.filter(doc => 
         doc.title.toLowerCase().includes(query) ||
-        doc.description?.toLowerCase().includes(query) ||
-        doc.tags?.some(tag => tag.toLowerCase().includes(query))
+        doc.description?.toLowerCase().includes(query)
       )
     }
     
     // 状态过滤
     if (selectedStatus.value) {
-      filtered = filtered.filter(doc => doc.status === selectedStatus.value)
+      filtered = filtered.filter(doc => {
+        if (selectedStatus.value === 'published') return doc.published
+        if (selectedStatus.value === 'draft') return !doc.published
+        return true
+      })
     }
     
-    // 标签过滤
-    if (selectedTags.value.length > 0) {
-      filtered = filtered.filter(doc => 
-        doc.tags?.some(tag => selectedTags.value.includes(tag))
-      )
-    }
+    // 标签过滤 - 暂时移除，因为ApiDocumentation类型中没有tags属性
+    // if (selectedTags.value.length > 0) {
+    //   filtered = filtered.filter(doc => 
+    //     doc.tags?.some(tag => selectedTags.value.includes(tag))
+    //   )
+    // }
     
     return filtered
   })
   
   const allTags = computed(() => {
-    const tags = new Set<string>()
-    documentations.value.forEach(doc => {
-      doc.tags?.forEach(tag => tags.add(tag))
-    })
-    return Array.from(tags)
+    // 暂时返回空数组，因为ApiDocumentation类型中没有tags属性
+    return []
   })
   
   const documentationStats = computed(() => {
     const total = documentations.value.length
-    const published = documentations.value.filter(doc => doc.status === 'published').length
-    const draft = documentations.value.filter(doc => doc.status === 'draft').length
-    const archived = documentations.value.filter(doc => doc.status === 'archived').length
+    const published = documentations.value.filter(doc => doc.published).length
+    const draft = documentations.value.filter(doc => !doc.published).length
+    const archived = 0 // 暂时设为0，因为ApiDocumentation类型中没有archived状态
     
     return { total, published, draft, archived }
   })
@@ -78,8 +78,6 @@ export const useDocumentationStore = defineStore('documentation', () => {
           title: '用户管理API',
           description: '用户注册、登录、信息管理相关接口',
           version: '1.0.0',
-          status: 'published',
-          tags: ['用户', '认证'],
           baseUrl: 'https://api.example.com',
           published: true,
           publishedUrl: 'https://docs.example.com/user-api',
@@ -94,7 +92,11 @@ export const useDocumentationStore = defineStore('documentation', () => {
             primaryColor: '#409EFF',
             secondaryColor: '#67C23A',
             fontFamily: 'system',
-            layout: 'sidebar',
+            layout: {
+              type: 'sidebar',
+              mode: 'fixed',
+              width: 'full'
+            },
             codeTheme: 'light'
           },
           sections: [
@@ -214,8 +216,6 @@ export const useDocumentationStore = defineStore('documentation', () => {
           title: '订单管理API',
           description: '电商订单创建、查询、管理相关接口',
           version: '2.1.0',
-          status: 'draft',
-          tags: ['订单', '电商'],
           createdAt: new Date('2024-01-10'),
           updatedAt: new Date('2024-01-18'),
           sections: [],
@@ -227,7 +227,11 @@ export const useDocumentationStore = defineStore('documentation', () => {
             primaryColor: '#409EFF',
             secondaryColor: '#67C23A',
             fontFamily: 'system',
-            layout: 'sidebar',
+            layout: {
+              type: 'sidebar',
+              mode: 'fixed',
+              width: 'full'
+            },
             codeTheme: 'light'
           },
           published: false,
@@ -263,8 +267,28 @@ export const useDocumentationStore = defineStore('documentation', () => {
             primaryColor: '#409EFF',
             secondaryColor: '#67C23A',
             fontFamily: 'system',
-            layout: 'sidebar',
-            codeTheme: 'light'
+            layout: {
+              type: 'sidebar',
+              mode: 'fixed',
+              width: 'full'
+            },
+            codeTheme: 'light',
+            customCss: '',
+            components: {
+              button: {
+                borderRadius: 4,
+                height: 32
+              },
+              card: {
+                borderRadius: 6,
+                shadow: 'small'
+              },
+              table: {
+                stripe: true,
+                border: false,
+                size: 'default'
+              }
+            }
           },
           published: data.published || false,
           createdAt: new Date(),
@@ -342,16 +366,17 @@ export const useDocumentationStore = defineStore('documentation', () => {
     return createDocumentation({
       ...original,
       title: `${original.title} (副本)`,
-      status: 'draft'
+      published: false
     })
   }
   
   const publishDocumentation = async (id: string) => {
-    return updateDocumentation(id, { status: 'published' })
+    return updateDocumentation(id, { published: true })
   }
   
   const archiveDocumentation = async (id: string) => {
-    return updateDocumentation(id, { status: 'archived' })
+    // 暂时设为未发布状态，因为ApiDocumentation类型中没有archived状态
+    return updateDocumentation(id, { published: false })
   }
   
   const setCurrentDocumentation = (doc: ApiDocumentation | null) => {
@@ -508,6 +533,15 @@ export const useDocumentationStore = defineStore('documentation', () => {
     selectedTags.value = []
   }
   
+  const updateSettings = async (settings: any) => {
+    if (currentDocumentation.value) {
+      currentDocumentation.value.settings = {
+        ...currentDocumentation.value.settings,
+        ...settings
+      }
+    }
+  }
+  
   return {
     // 状态
     documentations,
@@ -556,52 +590,24 @@ export const useDocumentationStore = defineStore('documentation', () => {
     setSearchQuery,
     setStatusFilter,
     setTagsFilter,
-    clearFilters
+    clearFilters,
+    
+    // 设置管理
+    updateSettings
   }
 })
 
 // 默认主题
 function getDefaultTheme(): DocTheme {
   return {
-    colors: {
-      primary: '#409EFF',
-      success: '#67C23A',
-      warning: '#E6A23C',
-      error: '#F56C6C',
-      info: '#909399',
-      background: '#ffffff',
-      surface: '#ffffff',
-      sidebar: '#f8f9fa',
-      header: '#ffffff',
-      textPrimary: '#303133',
-      textSecondary: '#606266',
-      textDisabled: '#C0C4CC',
-      link: '#409EFF'
-    },
+    primaryColor: '#409EFF',
+    secondaryColor: '#67C23A',
+    fontFamily: 'system',
     layout: {
-      mode: 'sidebar',
-      width: 'fluid',
-      maxWidth: 1200
+      type: 'sidebar',
+      mode: 'fixed',
+      width: 'full'
     },
-    typography: {
-      fontFamily: 'system',
-      fontSize: 14,
-      lineHeight: 1.5
-    },
-    components: {
-      button: {
-        borderRadius: 4,
-        height: 32
-      },
-      card: {
-        borderRadius: 6,
-        shadow: 'small'
-      },
-      table: {
-        stripe: true,
-        border: true,
-        size: 'default'
-      }
-    }
+    codeTheme: 'light'
   }
 }

@@ -76,15 +76,15 @@
                 
                 <div class="activity-meta">
                   <div class="actor-info">
-                    <el-avatar :src="activity.actor.avatar" :size="20">
-                      {{ activity.actor.name.charAt(0) }}
+                    <el-avatar :src="activity.userAvatar" :size="20">
+                      {{ activity.userName?.charAt(0) || 'U' }}
                     </el-avatar>
-                    <span class="actor-name">{{ activity.actor.name }}</span>
+                    <span class="actor-name">{{ activity.userName || '未知用户' }}</span>
                   </div>
                   
-                  <div class="activity-tags">
+                  <div class="activity-tags" v-if="activity.metadata?.tags">
                     <el-tag 
-                      v-for="tag in activity.tags" 
+                      v-for="tag in activity.metadata.tags" 
                       :key="tag"
                       size="small"
                       type="info"
@@ -94,10 +94,10 @@
                   </div>
                 </div>
                 
-                <div v-if="activity.details" class="activity-details">
+                <div v-if="activity.metadata" class="activity-details">
                   <el-collapse>
                     <el-collapse-item title="查看详情" name="details">
-                      <pre>{{ JSON.stringify(activity.details, null, 2) }}</pre>
+                      <pre>{{ JSON.stringify(activity.metadata, null, 2) }}</pre>
                     </el-collapse-item>
                   </el-collapse>
                 </div>
@@ -131,7 +131,7 @@ import {
   Share
 } from '@element-plus/icons-vue'
 import type { TeamActivity } from '@/types'
-import { formatDate, formatTime, formatRelativeTime } from '@/utils/formatter'
+import { formatDate, formatTime } from '@/utils/formatter'
 
 interface Props {
   activities: TeamActivity[]
@@ -191,7 +191,7 @@ const filteredActivities = computed(() => {
     filtered = filtered.filter(activity => 
       activity.title.toLowerCase().includes(search) ||
       activity.description.toLowerCase().includes(search) ||
-      activity.actor.name.toLowerCase().includes(search)
+      (activity.userName || '').toLowerCase().includes(search)
     )
   }
   

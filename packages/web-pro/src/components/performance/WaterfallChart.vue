@@ -71,7 +71,7 @@ const chartOption = computed(() => {
   const categories = [...new Set(props.data.map(item => item.name))]
   const maxTime = Math.max(...props.data.map(item => item.start + item.duration))
   
-  const seriesData = props.data.map((item, index) => {
+  const seriesData = props.data.map((item) => {
     const categoryIndex = categories.indexOf(item.name)
     return {
       name: item.name,
@@ -133,7 +133,7 @@ const chartOption = computed(() => {
     series: [
       {
         type: 'custom',
-        renderItem: (params: any, api: any) => {
+        renderItem: (_params: any, api: any) => {
           const categoryIndex = api.value(0)
           const start = api.coord([api.value(1), categoryIndex])
           const end = api.coord([api.value(2), categoryIndex])

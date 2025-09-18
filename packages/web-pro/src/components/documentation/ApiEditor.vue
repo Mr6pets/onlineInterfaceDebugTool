@@ -122,7 +122,7 @@
         <el-tab-pane label="请求体" name="requestBody" v-if="hasRequestBody">
           <div class="request-body-section">
             <div class="content-type-selector">
-              <el-select v-model="api.requestBody.contentType" placeholder="选择Content-Type">
+              <el-select v-model="api.requestBody!.contentType" placeholder="选择Content-Type">
                 <el-option label="application/json" value="application/json" />
                 <el-option label="application/x-www-form-urlencoded" value="application/x-www-form-urlencoded" />
                 <el-option label="multipart/form-data" value="multipart/form-data" />
@@ -132,13 +132,13 @@
             
             <div class="schema-editor">
               <h4>请求体结构</h4>
-              <SchemaEditor v-model="api.requestBody.schema" />
+              <SchemaEditor v-model="api.requestBody!.schema" />
             </div>
             
             <div class="example-editor">
               <h4>请求示例</h4>
               <CodeEditor
-                v-model="api.requestBody.example"
+                v-model="api.requestBody!.example!"
                 :language="getLanguageFromContentType(api.requestBody?.contentType || 'application/json')"
                 height="200px"
               />
@@ -180,7 +180,7 @@
                     </el-tab-pane>
                     <el-tab-pane label="示例" name="example">
                       <CodeEditor
-                        v-model="response.example"
+                        v-model="response.example || ''"
                         language="json"
                         height="150px"
                       />
@@ -273,7 +273,7 @@ import { Plus, Delete } from '@element-plus/icons-vue'
 import ParameterTable from './ParameterTable.vue'
 import SchemaEditor from './SchemaEditor.vue'
 import CodeEditor from './CodeEditor.vue'
-import type { ApiDocItem, ApiParameter, ApiResponse } from '@/types'
+import type { ApiDocItem } from '@/types'
 
 interface Props {
   api: ApiDocItem

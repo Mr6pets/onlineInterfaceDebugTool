@@ -20,7 +20,7 @@
       node-key="id"
       class="api-tree"
     >
-      <template #default="{ node, data }">
+      <template #default="{ data }">
         <div class="tree-node" :class="{ active: selectedNodeId === data.id }">
           <div class="node-content" @click="selectNode(data)">
             <el-icon class="node-icon" :class="getNodeIconClass(data.type)">

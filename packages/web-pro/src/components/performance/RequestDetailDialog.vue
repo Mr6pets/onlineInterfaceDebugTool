@@ -138,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CopyDocument, Refresh, Download } from '@element-plus/icons-vue'
 import type { ExtendedPerformanceMetrics } from '@/types'

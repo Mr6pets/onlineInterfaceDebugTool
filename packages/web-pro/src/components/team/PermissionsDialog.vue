@@ -235,13 +235,10 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { 
   User, 
-  Lock, 
   Document, 
   Setting, 
-  Message, 
   DataAnalysis,
-  Plus,
-  Search
+  Plus
 } from '@element-plus/icons-vue'
 import type { TeamMember } from '@/types'
 
@@ -418,7 +415,8 @@ const enabledPermissions = computed(() => {
 })
 
 // 获取角色类型
-const getRoleType = (role: string) => {
+const getRoleType = (role: string | undefined) => {
+  if (!role) return 'info'
   const types: Record<string, string> = {
     owner: 'danger',
     admin: 'warning',
@@ -429,7 +427,8 @@ const getRoleType = (role: string) => {
 }
 
 // 获取角色标签
-const getRoleLabel = (role: string) => {
+const getRoleLabel = (role: string | undefined) => {
+  if (!role) return '未知角色'
   const labels: Record<string, string> = {
     owner: '所有者',
     admin: '管理员',

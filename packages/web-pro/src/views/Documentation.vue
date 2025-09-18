@@ -45,7 +45,7 @@
           >
             <div class="doc-header">
               <div class="doc-info">
-                <h4>{{ doc.name }}</h4>
+                <h4>{{ doc.title }}</h4>
                 <p>{{ doc.description }}</p>
               </div>
               <div class="doc-status">
@@ -117,7 +117,7 @@
             <el-button @click="saveDoc" type="primary" size="small">
               保存
             </el-button>
-            <el-button @click="publishDoc(selectedDoc)" size="small" v-if="!selectedDoc.published">
+            <el-button @click="publishDoc(selectedDoc!)" size="small" v-if="!selectedDoc?.published">
               发布
             </el-button>
           </div>
@@ -128,12 +128,12 @@
           <div v-show="activeTab === 'info'" class="info-panel">
             <el-form :model="selectedDoc" label-width="100px">
               <el-form-item label="文档名称">
-                <el-input v-model="selectedDoc.name" placeholder="输入文档名称" />
+                <el-input v-model="selectedDoc!.title" placeholder="输入文档名称" />
               </el-form-item>
               
               <el-form-item label="描述">
                 <el-input
-                  v-model="selectedDoc.description"
+                  v-model="selectedDoc!.description"
                   type="textarea"
                   :rows="3"
                   placeholder="输入文档描述"
@@ -141,11 +141,11 @@
               </el-form-item>
               
               <el-form-item label="版本">
-                <el-input v-model="selectedDoc.version" placeholder="1.0.0" />
+                <el-input v-model="selectedDoc!.version" placeholder="1.0.0" />
               </el-form-item>
               
               <el-form-item label="基础URL">
-                <el-input v-model="selectedDoc.baseUrl" placeholder="https://api.example.com" />
+                <el-input v-model="selectedDoc!.baseUrl" placeholder="https://api.example.com" />
               </el-form-item>
               
               <el-form-item label="Logo">
@@ -162,16 +162,16 @@
               
               <el-form-item label="联系信息">
                 <div class="contact-form">
-                  <el-input v-model="selectedDoc.settings.contact.name" placeholder="联系人" />
-                  <el-input v-model="selectedDoc.settings.contact.email" placeholder="邮箱" />
-                  <el-input v-model="selectedDoc.settings.contact.url" placeholder="网站" />
+                  <el-input v-model="selectedDoc!.settings!.contact!.name" placeholder="联系人" />
+                  <el-input v-model="selectedDoc!.settings!.contact!.email" placeholder="邮箱" />
+                  <el-input v-model="selectedDoc!.settings!.contact!.url" placeholder="网站" />
                 </div>
               </el-form-item>
               
               <el-form-item label="许可证">
                 <div class="license-form">
-                  <el-input v-model="selectedDoc.settings.license.name" placeholder="许可证名称" />
-                  <el-input v-model="selectedDoc.settings.license.url" placeholder="许可证URL" />
+                  <el-input v-model="selectedDoc!.settings!.license!.name" placeholder="许可证名称" />
+                  <el-input v-model="selectedDoc!.settings!.license!.url" placeholder="许可证URL" />
                 </div>
               </el-form-item>
             </el-form>
@@ -193,7 +193,7 @@
             
             <div class="apis-tree">
               <ApiDocTree
-                :data="selectedDoc.sections"
+                :data="apiTreeData"
                 @add-group="addApiGroup"
                 @edit-group="editApiGroup"
                 @delete-group="deleteApiGroup"
@@ -213,7 +213,7 @@
                   v-for="theme in themes"
                   :key="theme.name"
                   class="theme-option"
-                  :class="{ active: selectedDoc.theme?.name === theme.name }"
+                  :class="{ active: currentThemeName === theme.name }"
                   @click="updateDocTheme(theme.name)"
                 >
                   <div class="theme-preview" :style="theme.preview"></div>
@@ -222,14 +222,15 @@
               </div>
             </div>
             
-            <div class="custom-css" v-if="selectedDoc.theme?.name === 'custom'">
+            <div class="custom-css" v-if="selectedDoc?.theme?.customCss !== undefined">
               <h4>自定义CSS</h4>
+              <!-- MonacoEditor组件不存在，暂时注释
               <MonacoEditor
-                v-model="selectedDoc.theme.customCSS"
+                v-model="selectedDoc!.theme!.customCss"
                 language="css"
                 :height="300"
                 :options="{ minimap: { enabled: false } }"
-              />
+              /> -->
             </div>
           </div>
           
@@ -257,24 +258,24 @@
     </div>
     
     <!-- 创建文档对话框 -->
-    <CreateDocDialog
+    <!-- <CreateDocDialog
       v-model="showCreateDialog"
-      @create="handleCreateDoc"
-    />
+      @save="handleCreateDoc"
+    /> -->
     
     <!-- 文档设置对话框 -->
-    <DocSettingsDialog
+    <!-- <DocSettingsDialog
       v-model="showSettingsDialog"
       :settings="docSettings"
       @save="handleSaveSettings"
-    />
+    /> -->
     
     <!-- API编辑对话框 -->
-    <ApiEditDialog
+    <!-- <ApiEditDialog
       v-model="showApiDialog"
       :api="editingApi"
       @save="handleSaveApi"
-    />
+    /> -->
   </div>
 </template>
 
@@ -284,10 +285,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, MoreFilled, Plus } from '@element-plus/icons-vue'
 import PageHeader from '../components/common/PageHeader.vue'
 import ApiDocTree from '../components/documentation/ApiDocTree.vue'
-import ApiEditor from '../components/documentation/ApiEditor.vue'
-import ThemeCustomizer from '../components/documentation/ThemeCustomizer.vue'
-import DocPreview from '../components/documentation/DocPreview.vue'
-import CodeEditor from '../components/documentation/CodeEditor.vue'
+
+
+// import CreateDocDialog from '../components/documentation/CreateDocDialog.vue' // 文件不存在，暂时注释
+// import DocSettingsDialog from '../components/documentation/DocSettingsDialog.vue' // 文件不存在，暂时注释
+// import ApiEditDialog from '../components/documentation/ApiEditDialog.vue' // 文件不存在，暂时注释
+// import MonacoEditor from '../components/common/MonacoEditor.vue' // 文件不存在，暂时注释
 import { useDocumentationStore } from '../stores/documentation'
 import type { ApiDocumentation } from '@/types'
 
@@ -304,17 +307,49 @@ const editingApi = ref(null)
 const previewFrame = ref()
 
 const docs = computed(() => documentationStore.documentations)
-const docSettings = computed(() => documentationStore.settings)
+// const docSettings = computed(() => selectedDoc.value?.settings || {}) // 暂时注释，因为DocSettingsDialog不存在
 const previewUrl = computed(() => 
   selectedDoc.value ? `/api/docs/${selectedDoc.value.id}/preview` : ''
 )
+const currentThemeName = ref('default')
+
+const apiTreeData = computed(() => {
+  if (!selectedDoc.value?.sections) return []
+  
+  // 从 sections 中提取 endpoints 类型的部分来构建 API 树
+  const endpointSections = selectedDoc.value.sections.filter(section => section.type === 'endpoints')
+  
+  return endpointSections.map((section: any, sectionIndex: number) => ({
+    id: section.id,
+    name: section.title,
+    description: section.content,
+    type: 'group' as const,
+    order: sectionIndex,
+    collapsed: false,
+    children: section.endpoints?.map((api: any, apiIndex: number) => ({
+      id: api.id,
+      name: api.summary || api.path,
+      description: api.description,
+      method: api.method,
+      path: api.path,
+      type: 'api' as const,
+      parameters: api.parameters || [],
+      requestBody: api.requestBody,
+      responses: api.responses || [],
+      examples: api.examples || [],
+      tags: api.tags || [],
+      deprecated: api.deprecated || false,
+      order: apiIndex
+    })) || []
+  }))
+})
 
 const filteredDocs = computed(() => {
   let filtered = docs.value
   
   if (searchText.value) {
     filtered = filtered.filter(doc => 
-      doc.name.toLowerCase().includes(searchText.value.toLowerCase()) ||
+      doc.title.toLowerCase().includes(searchText.value.toLowerCase()) ||
       doc.description?.toLowerCase().includes(searchText.value.toLowerCase())
     )
   }
@@ -392,7 +427,7 @@ const handleDocAction = async ({ action, doc }: { action: string, doc: ApiDocume
       break
       
     case 'export':
-      await documentationStore.exportDocumentation(doc.id)
+      await documentationStore.exportDocumentation(doc.id, 'json')
       ElMessage.success('文档已导出')
       break
       
@@ -419,24 +454,24 @@ const handleDocAction = async ({ action, doc }: { action: string, doc: ApiDocume
   }
 }
 
-const handleCreateDoc = async (docData: any) => {
-  try {
-    const newDoc = await documentationStore.createDocumentation(docData)
-    selectedDoc.value = newDoc
-    ElMessage.success('文档已创建')
-  } catch (error) {
-    ElMessage.error('创建失败')
-  }
-}
+// const handleCreateDoc = async (docData: any) => {
+//   try {
+//     const newDoc = await documentationStore.createDocumentation(docData)
+//     selectedDoc.value = newDoc
+//     ElMessage.success('文档已创建')
+//   } catch (error) {
+//     ElMessage.error('创建失败')
+//   }
+// }
 
-const handleSaveSettings = async (settings: any) => {
-  try {
-    await documentationStore.updateSettings(settings)
-    ElMessage.success('设置已保存')
-  } catch (error) {
-    ElMessage.error('保存失败')
-  }
-}
+// const handleSaveSettings = async (settings: any) => {
+//   try {
+//     await documentationStore.updateSettings(settings)
+//     ElMessage.success('设置已保存')
+//   } catch (error) {
+//     ElMessage.error('保存失败')
+//   }
+// }
 
 const handleLogoSuccess = (response: any) => {
   if (selectedDoc.value && selectedDoc.value.settings) {
@@ -445,12 +480,24 @@ const handleLogoSuccess = (response: any) => {
 }
 
 const updateDocTheme = (themeName: string) => {
+  currentThemeName.value = themeName
   if (selectedDoc.value) {
     if (!selectedDoc.value.theme) {
-      selectedDoc.value.theme = { name: themeName }
-    } else {
-      selectedDoc.value.theme.name = themeName
+      selectedDoc.value.theme = {
+        primaryColor: '#409eff',
+        secondaryColor: '#67c23a',
+        fontFamily: 'Inter, sans-serif',
+        layout: {
+          type: 'sidebar',
+          mode: 'fixed',
+          width: 'full'
+        },
+        codeTheme: 'light',
+        customCss: ''
+      }
     }
+    // 主题名称可能需要存储在其他地方，或者作为customCss的一部分
+    console.log('应用主题:', themeName)
   }
 }
 
@@ -462,11 +509,11 @@ const addApiGroup = () => {
   // 添加API分组逻辑
 }
 
-const editApiGroup = (group: any) => {
+const editApiGroup = (_group: any) => {
   // 编辑API分组逻辑
 }
 
-const deleteApiGroup = (groupId: string) => {
+const deleteApiGroup = (_groupId: string) => {
   // 删除API分组逻辑
 }
 
@@ -480,13 +527,13 @@ const editApi = (api: any) => {
   showApiDialog.value = true
 }
 
-const deleteApi = (apiId: string) => {
+const deleteApi = (_apiId: string) => {
   // 删除API逻辑
 }
 
-const handleSaveApi = (apiData: any) => {
-  // 保存API逻辑
-}
+// const handleSaveApi = (_apiData: any) => {
+//   // 保存API逻辑
+// }
 
 const importFromCollection = () => {
   // 从集合导入逻辑

@@ -8,7 +8,7 @@
       ]"
     >
       <template #actions>
-        <el-button @click="showInviteDialog = true" type="primary" :icon="UserPlus">
+        <el-button @click="showInviteDialog = true" type="primary" :icon="Plus">
           邀请成员
         </el-button>
         <el-button @click="showSettingsDialog = true" :icon="Setting">
@@ -140,7 +140,7 @@
                   </div>
                 </div>
                 <div class="member-actions">
-                  <el-dropdown @command="(command) => handleMemberAction(command, member)">
+                  <el-dropdown @command="(command: string) => handleMemberAction(command, member)">
                     <el-button size="small" :icon="MoreFilled" circle />
                     <template #dropdown>
                       <el-dropdown-menu>
@@ -205,6 +205,7 @@
     <!-- 对话框组件 -->
     <InviteMemberDialog
       v-model="showInviteDialog"
+      :team="currentTeam"
       @invite="handleInvite"
     />
     
@@ -236,7 +237,7 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   User,
-  UserPlus,
+  Plus,
   Setting,
   Download,
   ArrowDown,
@@ -254,7 +255,7 @@ import InviteMemberDialog from '@/components/team/InviteMemberDialog.vue'
 import TeamSettingsDialog from '@/components/team/TeamSettingsDialog.vue'
 import PermissionsDialog from '@/components/team/PermissionsDialog.vue'
 import EditMemberDialog from '@/components/team/EditMemberDialog.vue'
-import type { TeamMember, Team } from '@/types'
+import type { TeamMember, Team, Permission } from '@/types'
 
 const teamStore = useTeamStore()
 
@@ -310,7 +311,9 @@ const currentTeam = ref<Team>({
       frequency: 'realtime',
       quietHours: ['22:00', '08:00']
     }
-  }
+  },
+  createdAt: new Date(Date.now() - 86400000).toISOString(),
+  updatedAt: new Date(Date.now() - 3600000).toISOString()
 })
 
 // 当前用户角色
@@ -357,50 +360,92 @@ const members = ref<TeamMember[]>([
 ])
 
 // 权限矩阵数据
-const permissionsMatrix = ref({
-  roles: ['owner', 'admin', 'editor', 'viewer'],
-  permissions: ['read', 'write', 'delete', 'admin', 'invite', 'manage_team', 'manage_billing'],
-  matrix: {
-    owner: ['read', 'write', 'delete', 'admin', 'invite', 'manage_team', 'manage_billing'],
-    admin: ['read', 'write', 'delete', 'invite', 'manage_team'],
-    editor: ['read', 'write'],
-    viewer: ['read']
+const permissionsMatrix = ref<Permission[]>([
+  {
+    key: 'read',
+    name: '查看',
+    description: '查看团队信息和数据',
+    category: 'basic',
+    roles: ['owner', 'admin', 'editor', 'viewer']
   },
-  inherited: {
-    admin: ['read'],
-    editor: ['read'],
-    viewer: []
+  {
+    key: 'write',
+    name: '编辑',
+    description: '编辑团队信息和数据',
+    category: 'basic',
+    roles: ['owner', 'admin', 'editor']
+  },
+  {
+    key: 'delete',
+    name: '删除',
+    description: '删除团队数据',
+    category: 'basic',
+    roles: ['owner', 'admin']
+  },
+  {
+    key: 'admin',
+    name: '管理',
+    description: '管理团队设置',
+    category: 'admin',
+    roles: ['owner']
+  },
+  {
+    key: 'invite',
+    name: '邀请',
+    description: '邀请新成员',
+    category: 'member',
+    roles: ['owner', 'admin']
+  },
+  {
+    key: 'manage_team',
+    name: '团队管理',
+    description: '管理团队成员和设置',
+    category: 'admin',
+    roles: ['owner', 'admin']
+  },
+  {
+    key: 'manage_billing',
+    name: '账单管理',
+    description: '管理付费计划和账单',
+    category: 'billing',
+    roles: ['owner']
   }
-})
+])
 
 // 最近活动数据
 const recentActivities = ref([
   {
     id: '1',
-    type: 'member',
-    actor: { id: '1', name: '张三', avatar: '' },
-    action: '邀请了新成员',
-    target: '李四',
-    timestamp: '2024-03-15 10:30:00',
-    details: '邀请李四加入团队，角色为管理员'
+    type: 'member_joined' as const,
+    title: '邀请了新成员',
+    description: '邀请李四加入团队，角色为管理员',
+    userId: '1',
+    userName: '张三',
+    userAvatar: '',
+    timestamp: '2024-03-15T10:30:00Z',
+    teamId: '1'
   },
   {
     id: '2',
-    type: 'permission',
-    actor: { id: '1', name: '张三', avatar: '' },
-    action: '修改了权限',
-    target: '王五',
-    timestamp: '2024-03-14 15:20:00',
-    details: '将王五的角色从查看者升级为编辑者'
+    type: 'member_joined' as const,
+    title: '修改了权限',
+    description: '将王五的角色从查看者升级为编辑者',
+    userId: '1',
+    userName: '张三',
+    userAvatar: '',
+    timestamp: '2024-03-14T15:20:00Z',
+    teamId: '1'
   },
   {
     id: '3',
-    type: 'project',
-    actor: { id: '2', name: '李四', avatar: '' },
-    action: '创建了项目',
-    target: '新产品开发',
-    timestamp: '2024-03-13 09:15:00',
-    details: '创建了新产品开发项目'
+    type: 'project_created' as const,
+    title: '创建了项目',
+    description: '创建了新产品开发项目',
+    userId: '2',
+    userName: '李四',
+    userAvatar: '',
+    timestamp: '2024-03-13T09:15:00Z',
+    teamId: '1'
   }
 ])
 
@@ -506,7 +551,7 @@ const handleRemoveMember = async (member: TeamMember) => {
   }
 }
 
-const handleInvite = (inviteData: any) => {
+const handleInvite = (_: any) => {
   ElMessage.success('邀请发送成功')
   // 这里可以添加实际的邀请逻辑
 }
@@ -526,7 +571,7 @@ const handleSettingsSave = (settings: any) => {
   ElMessage.success('团队设置保存成功')
 }
 
-const handleOwnershipTransfer = (targetId: string) => {
+const handleOwnershipTransfer = (_: string) => {
   ElMessage.success('所有权转移成功')
 }
 
@@ -554,8 +599,8 @@ const handleExport = (command: string) => {
   ElMessage.success(`导出${command === 'members' ? '成员列表' : command === 'permissions' ? '权限报告' : '活动日志'}成功`)
 }
 
-const updatePermissions = (newPermissions: any) => {
-  permissionsMatrix.value = { ...permissionsMatrix.value, ...newPermissions }
+const updatePermissions = (newPermissions: Permission[]) => {
+  permissionsMatrix.value = newPermissions
   ElMessage.success('权限矩阵更新成功')
 }
 

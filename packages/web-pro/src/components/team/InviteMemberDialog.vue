@@ -208,10 +208,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, computed } from 'vue'
+import { ElMessage } from 'element-plus'
 import { DocumentCopy, UploadFilled } from '@element-plus/icons-vue'
-import type { Team, TeamMember } from '@/types'
+import type { Team } from '@/types'
 
 interface Props {
   modelValue: boolean
@@ -382,7 +382,7 @@ const shareLink = () => {
 // 处理文件上传
 const handleFileChange = (file: any) => {
   const reader = new FileReader()
-  reader.onload = (e) => {
+  reader.onload = () => {
     try {
       // 这里应该解析CSV/Excel文件
       // 简化示例，实际需要使用相应的解析库

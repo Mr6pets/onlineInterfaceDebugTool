@@ -35,6 +35,7 @@ export interface TestSuite {
   lastRun?: number | null
   createdAt: number
   updatedAt: number
+  createdBy: string
 }
 
 export interface TestCase {
@@ -66,6 +67,7 @@ export interface TestResult {
   duration: number
   timestamp: number
   environment: string
+  executor: string
   request?: {
     method: string
     url: string
@@ -104,7 +106,7 @@ export interface Schedule {
   cronExpression?: string
   interval?: number
   intervalUnit?: 'minutes' | 'hours' | 'days'
-  executeAt?: string
+  executeAt?: number
   timezone: string
   enabled: boolean
   retryOnFailure: boolean
@@ -330,6 +332,20 @@ export interface MockRoute {
   createdAt: Date
   updatedAt: Date
   createdBy?: string
+}
+
+export interface MockLog {
+  id: string
+  timestamp: number
+  method: string
+  path: string
+  statusCode: number
+  responseTime: number
+  ip: string
+  requestHeaders: Record<string, string>
+  requestBody: any
+  responseHeaders: Record<string, string>
+  responseBody: string
 }
 
 export interface MockResponse {
@@ -704,7 +720,7 @@ export interface ApiEndpoint {
 
 export interface EndpointParameter {
   name: string
-  in: 'query' | 'path' | 'header' | 'cookie'
+  in: 'query' | 'path' | 'header' | 'cookie' | 'body'
   required: boolean
   type: string
   description?: string
@@ -773,15 +789,65 @@ export interface DocSettings {
     description?: string
     keywords?: string[]
   }
+  license?: {
+    name?: string
+    url?: string
+  }
+  contact?: {
+    name?: string
+    email?: string
+    url?: string
+  }
 }
 
 export interface DocTheme {
   primaryColor: string
   secondaryColor: string
   fontFamily: string
-  layout: 'sidebar' | 'topbar'
+  layout: {
+    type: 'sidebar' | 'topbar'
+    mode?: 'fixed' | 'fluid'
+    width?: 'full' | 'boxed'
+    maxWidth?: number
+  }
   codeTheme: 'light' | 'dark'
   customCss?: string
+  // 扩展属性以支持ThemeCustomizer组件
+  colors?: {
+    primary?: string
+    success?: string
+    warning?: string
+    error?: string
+    info?: string
+    background?: string
+    surface?: string
+    sidebar?: string
+    header?: string
+    textPrimary?: string
+    textSecondary?: string
+    textDisabled?: string
+    link?: string
+  }
+  typography?: {
+    fontFamily?: string
+    fontSize?: number
+    lineHeight?: number
+  }
+  components?: {
+    button?: {
+      borderRadius?: number
+      height?: number
+    }
+    card?: {
+      borderRadius?: number
+      shadow?: 'none' | 'small' | 'medium' | 'large'
+    }
+    table?: {
+      stripe?: boolean
+      border?: boolean
+      size?: 'small' | 'default' | 'large'
+    }
+  }
 }
 
 export interface DocTemplate {
@@ -803,4 +869,122 @@ export interface DocTemplate {
 export interface Trend {
   value: number
   direction: 'up' | 'down'
+}
+
+// API文档相关类型定义
+export interface ApiDocGroup {
+  id: string
+  name: string
+  description?: string
+  children: ApiDocItem[]
+  order: number
+  collapsed?: boolean
+  type: 'group'
+}
+
+export interface ApiDocItem {
+  id: string
+  name: string
+  description?: string
+  method: string
+  path: string
+  parameters?: {
+    path?: ApiParameter[]
+    query?: ApiParameter[]
+    header?: ApiParameter[]
+  }
+  requestBody?: {
+    contentType: string
+    schema?: any
+    example?: string
+  }
+  responses?: Record<string, {
+    description: string
+    schema?: any
+    example?: string
+    headers?: ApiParameter[]
+  }>
+  examples?: {
+    curl?: string
+    javascript?: string
+    python?: string
+  }
+  tags?: string[]
+  deprecated?: boolean
+  order: number
+  type: 'api'
+}
+
+export interface ApiParameter {
+  name: string
+  type: string
+  required: boolean
+  description?: string
+  example?: any
+  in?: 'query' | 'path' | 'header' | 'body' | 'cookie'
+  schema?: any
+  default?: any
+}
+
+export interface ApiResponse {
+  statusCode: number
+  description: string
+  schema?: any
+  examples?: any
+  headers?: Record<string, any>
+}
+
+// 文档主题类型
+export interface DocumentationTheme {
+  id: string
+  name: string
+  primaryColor: string
+  secondaryColor: string
+  backgroundColor: string
+  textColor: string
+  fontFamily: string
+  borderRadius: number
+  spacing: number
+  customCss?: string
+}
+
+// 文档类型
+export interface Documentation {
+  id: string
+  title: string
+  description?: string
+  version: string
+  baseUrl?: string
+  groups: ApiDocGroup[]
+  theme: DocumentationTheme
+  settings: any
+  published: boolean
+  status?: 'draft' | 'published' | 'archived'
+  contact?: {
+    name?: string
+    email?: string
+    url?: string
+  }
+  license?: {
+    name: string
+    url?: string
+  }
+  sections?: DocSection[]
+  createdAt: string
+  updatedAt: string
+  createdBy: string
+}
+
+// 团队活动类型
+export interface TeamActivity {
+  id: string
+  type: 'member_joined' | 'member_left' | 'project_created' | 'api_called' | 'test_run' | 'documentation_updated'
+  title: string
+  description: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  metadata?: Record<string, any>
+  timestamp: string
+  teamId: string
 }
