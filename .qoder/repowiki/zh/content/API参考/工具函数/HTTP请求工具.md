@@ -2,11 +2,21 @@
 
 <cite>
 **本文档引用的文件**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
-- [RequestPanel.vue](file://packages/web-full/src/components/RequestPanel.vue#L1-L523)
-- [request.ts](file://packages/web-lite/src/stores/request.ts#L1-L305)
-- [index.ts](file://packages/shared/types/index.ts#L11-L38)
+- [http.ts](file://packages\shared\utils\http.ts) - *HTTP请求核心实现*
+- [RequestPanel.vue](file://packages\web-full\src\components\RequestPanel.vue) - *完整版请求面板组件*
+- [request.ts](file://packages\web-lite\src\stores\request.ts) - *轻量版请求状态管理*
+- [index.ts](file://packages\shared\types\index.ts) - *共享类型定义*
 </cite>
+
+## 更新摘要
+**变更内容**
+- 修正HTTP请求模块实际基于`fetch`而非Axios
+- 更新`HttpClient`类的实现细节与调用流程
+- 修正请求配置参数结构差异
+- 更新拦截器与错误处理机制说明
+- 修正多基地址配置方法
+- 更新实际调用示例与Pinia集成方式
+- 修正认证令牌处理逻辑
 
 ## 目录
 1. [简介](#简介)
@@ -33,7 +43,7 @@ HTTP请求模块主要由以下几个部分组成：
 该模块位于`packages/shared/utils/http.ts`，被多个子项目共享使用。
 
 **Section sources**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
+- [http.ts](file://packages\shared\utils\http.ts)
 
 ## HttpClient类详解
 `HttpClient`类是整个HTTP请求系统的核心，其主要功能包括：
@@ -72,10 +82,10 @@ ReturnResult --> End([结束])
 ```
 
 **Diagram sources**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
+- [http.ts](file://packages\shared\utils\http.ts)
 
 **Section sources**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
+- [http.ts](file://packages\shared\utils\http.ts)
 
 ## 请求配置与参数说明
 `RequestConfig`接口定义了所有可用的请求参数：
@@ -126,10 +136,10 @@ RequestConfig --> AuthConfig : "包含"
 ```
 
 **Diagram sources**
-- [index.ts](file://packages/shared/types/index.ts#L11-L38)
+- [index.ts](file://packages\shared\types\index.ts)
 
 **Section sources**
-- [index.ts](file://packages/shared/types/index.ts#L11-L38)
+- [index.ts](file://packages\shared\types\index.ts)
 
 ## 拦截器与错误处理机制
 虽然当前实现未显式使用Axios风格的拦截器，但通过`HttpClient`的封装实现了类似功能：
@@ -172,10 +182,10 @@ end
 ```
 
 **Diagram sources**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
+- [http.ts](file://packages\shared\utils\http.ts)
 
 **Section sources**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
+- [http.ts](file://packages\shared\utils\http.ts)
 
 ## 多基地址配置支持
 通过`setBaseURL()`方法支持动态切换不同环境的API基地址：
@@ -196,7 +206,7 @@ client.setBaseURL('https://api.example.com/v1');
 这种设计允许在运行时根据当前环境动态切换API地址，无需重新编译代码。
 
 **Section sources**
-- [http.ts](file://packages/shared/utils/http.ts#L7-L12)
+- [http.ts](file://packages\shared\utils\http.ts)
 
 ## 实际调用示例
 在`RequestPanel.vue`组件中展示了完整的请求调用模式：
@@ -236,7 +246,7 @@ try {
 ```
 
 **Section sources**
-- [RequestPanel.vue](file://packages/web-full/src/components/RequestPanel.vue#L1-L523)
+- [RequestPanel.vue](file://packages\web-full\src\components\RequestPanel.vue)
 
 ## Pinia状态管理集成
 在`request.ts` Store中集成了HTTP请求功能：
@@ -274,10 +284,10 @@ M --> N[结束]
 ```
 
 **Diagram sources**
-- [request.ts](file://packages/web-lite/src/stores/request.ts#L1-L305)
+- [request.ts](file://packages\web-lite\src\stores\request.ts)
 
 **Section sources**
-- [request.ts](file://packages/web-lite/src/stores/request.ts#L1-L305)
+- [request.ts](file://packages\web-lite\src\stores\request.ts)
 
 ## 认证令牌刷新与请求队列管理
 虽然当前代码未直接实现令牌刷新队列，但提供了扩展基础：
@@ -309,7 +319,7 @@ Processing --> Idle : "完成"
 ```
 
 **Diagram sources**
-- [request.ts](file://packages/web-lite/src/stores/request.ts#L1-L305)
+- [request.ts](file://packages\web-lite\src\stores\request.ts)
 
 ## 扩展能力与性能优化建议
 
@@ -344,5 +354,5 @@ class CustomHttpClient extends HttpClient {
 - 监控网络延迟分布
 
 **Section sources**
-- [http.ts](file://packages/shared/utils/http.ts#L1-L62)
-- [request.ts](file://packages/web-lite/src/stores/request.ts#L1-L305)
+- [http.ts](file://packages\shared\utils\http.ts)
+- [request.ts](file://packages\web-lite\src\stores\request.ts)

@@ -2,13 +2,22 @@
 
 <cite>
 **本文档中引用的文件**  
-- [types/index.ts](file://packages/shared/types/index.ts)
-- [utils/http.ts](file://packages/shared/utils/http.ts)
-- [utils/storage.ts](file://packages/shared/utils/storage.ts)
-- [utils/formatter.ts](file://packages/shared/utils/formatter.ts)
-- [utils/validator.ts](file://packages/shared/utils/validator.ts)
-- [utils/index.ts](file://packages/shared/utils/index.ts)
+- [types/index.ts](file://packages/shared/types/index.ts) - *更新了批量测试、工作空间、团队协作等类型定义*
+- [utils/http.ts](file://packages/shared/utils/http.ts) - *实现了基于fetch的HTTP客户端封装*
+- [utils/storage.ts](file://packages/shared/utils/storage.ts) - *提供了带前缀的localStorage操作封装*
+- [utils/formatter.ts](file://packages/shared/utils/formatter.ts) - *包含多种数据格式化方法*
+- [utils/validator.ts](file://packages/shared/utils/validator.ts) - *提供URL、JSON、邮箱等验证功能*
+- [utils/index.ts](file://packages/shared/utils/index.ts) - *统一导出所有工具模块*
+- [index.ts](file://packages/shared/index.ts) - *共享包主入口文件*
 </cite>
+
+## 更新摘要
+**已更新内容**  
+- 根据最新代码提交，完善了`types/index.ts`中的类型定义文档，新增**测试用例**、**批量测试结果**、**工作空间设置**等接口说明
+- 更新了**共享类型定义**章节，准确反映当前源码中的数据模型结构
+- 修正了**核心工具模块**中各工具类的方法签名与行为描述，确保与实现一致
+- 补充了`TestCase`、`BatchTestResult`、`WorkspaceSettings`等新类型的技术细节
+- 优化了文档结构，增强可检索性与开发者查阅体验
 
 ## 目录
 1. [简介](#简介)
