@@ -1,5 +1,5 @@
 // 导出shared包中的类型
-export * from '@api-debug-tool/shared/types'
+export * from '@onlineInterfaceDebugTool/shared/types'
 
 // 自动化测试相关类型扩展
 export interface RunHistoryData {
